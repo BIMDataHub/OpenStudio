@@ -18,10 +18,11 @@
 **********************************************************************/
 
 #include "ProjectImporter.hpp"
+
+#include "IFCTabController.hpp"
 #include "BIMserverConnection.hpp"
 
 #include "../osversion/VersionTranslator.hpp"
-
 
 #include <QFileDialog>
 #include <QGridLayout>
@@ -29,7 +30,6 @@
 #include <QMessageBox>
 #include <QLabel>
 #include <QEventLoop>
-
 #include <QLineEdit>
 #include <QPushButton>
 
@@ -37,54 +37,17 @@ namespace openstudio {
 namespace bimserver {
 
   ProjectImporter::ProjectImporter(QWidget *parent) :
-    QDialog(parent) 
+    OSDialog(parent) 
   {
-    auto subLayout = new QGridLayout;
-    auto mainLayout = new QVBoxLayout;
 
-    QLabel *introLabel = new QLabel("Please select a project to import: ", this);
-    m_proList = new QListWidget(this);
-    m_ifcList = new QListWidget(this);
-    m_okButton = new QPushButton(tr("Download OSM File"), this);
-    m_okButton->setEnabled(false);
-    QPushButton *newButton = new QPushButton(tr("New Project"), this);
-    m_loadButton = new QPushButton(tr("Check in IFC File"), this);
-    m_loadButton->setEnabled(false);
-    m_selectButton = new QPushButton(tr(" > "), this);
-    m_selectButton->setEnabled(false);
-    QPushButton *cancelButton = new QPushButton(tr("Cancel"), this);
-    QPushButton *settingButton = new QPushButton(tr("Setting"), this);
-    m_statusBar = new QStatusBar(this);
-    
-    connect(m_okButton, SIGNAL(clicked()), this, SLOT(okButton_clicked()));
-    connect(newButton, SIGNAL(clicked()),this, SLOT(newButton_clicked()));
-    connect(m_loadButton, SIGNAL(clicked()), this, SLOT(loadButton_clicked()));
-    connect(m_selectButton, SIGNAL(clicked()), this, SLOT(selectButton_clicked()));
-    connect(settingButton, SIGNAL(clicked()),this, SLOT(settingButton_clicked()));
-    connect(cancelButton, SIGNAL(clicked()), this, SLOT(app_ended()));
+    //m_mainTabController = std::shared_ptr<MainTabController>(new IFCTabController());
+    //mainLayout->addWidget(m_mainTabController->mainContentWidget());
+    m_IFCTabController = new IFCTabController(true);
+    this->upperLayout()->addWidget(m_IFCTabController->mainContentWidget());
 
-    subLayout->addWidget(m_proList, 1, 0, 1, 1);
-    subLayout->addWidget(m_ifcList, 1, 2, 1, 1);
-
-    subLayout->addWidget(introLabel, 0, 0, 1, 3);
-    subLayout->addWidget(m_selectButton, 1, 1, 1, 1);
-    subLayout->addWidget(newButton, 2, 0, 1, 1);
-    subLayout->addWidget(m_loadButton, 2, 2, 1, 1);
-    subLayout->addWidget(m_okButton, 3, 0, 1, 1);
-    subLayout->addWidget(settingButton, 3, 1, 1, 1);
-    subLayout->addWidget(cancelButton, 3, 2, 1, 1);
-
-    mainLayout->addLayout(subLayout);
-
-    mainLayout->addWidget(m_statusBar);
-
-    setLayout(mainLayout);
-
-    setWindowTitle("Import Project");
-
-    m_waitForOSM = new QEventLoop(this);
-    m_settings = new QSettings("OpenStudio", "BIMserverConnection");
     m_bimserverConnection = nullptr;
+    m_waitForOSM = new QEventLoop(this);
+    m_settings = m_IFCTabController->m_settings;
   }
 
   ProjectImporter::~ProjectImporter() 
@@ -92,7 +55,7 @@ namespace bimserver {
   }
 
   boost::optional<model::Model> ProjectImporter::run() 
-  {
+  { 
     if (m_settings->contains("addr") && m_settings->contains("port") && m_settings->contains("usrname") && m_settings->contains("psw")) {
       QString addr = m_settings->value("addr").toString();
       QString port = m_settings->value("port").toString();
@@ -101,9 +64,9 @@ namespace bimserver {
 
       m_bimserverConnection = new BIMserverConnection(this, addr, port);
 
-      connect(m_bimserverConnection, &BIMserverConnection::osmStringRetrieved, this, &ProjectImporter::processOSMRetrieved);
-      connect(m_bimserverConnection, &BIMserverConnection::listAllProjects, this, &ProjectImporter::processProjectList);
-      connect(m_bimserverConnection, &BIMserverConnection::listAllIFCRevisions, this, &ProjectImporter::processIFCList);
+      connect(m_bimserverConnection, &BIMserverConnection::osmStringRetrieved, m_IFCTabController, &IFCTabController::processOSMRetrieved);
+      connect(m_bimserverConnection, &BIMserverConnection::listAllProjects, m_projectsWidget, &ProjectsWidget::processProjectList);
+      connect(m_bimserverConnection, &BIMserverConnection::listAllIFCRevisions, m_filesWidget, &FilesWidget::processIFCList);
       connect(m_bimserverConnection, &BIMserverConnection::operationSucceeded, this, &ProjectImporter::processSucessCases);
       connect(m_bimserverConnection, &BIMserverConnection::errorOccured, this, &ProjectImporter::processFailureCases);
       connect(m_bimserverConnection, &BIMserverConnection::bimserverError, this, &ProjectImporter::processBIMserverErrors);
@@ -112,82 +75,66 @@ namespace bimserver {
       m_bimserverConnection->login(usrname, psw);
 
     } else {
-      settingButton_clicked();
+      QMessageBox messageBox(this);
+      messageBox.setText(tr("BIMserver disconnected")); 
+      messageBox.setDetailedText(tr("BIMserver is not connected correctly. Please check if BIMserver is running and make sure your username and password are valid.\n"));
+      messageBox.exec();
+      this->show();
     }
 
     //execute event loop
     m_waitForOSM->exec();
 
     //Reverse Translate from osmString.
-
     if (!m_OSM.isEmpty()) {
       std::stringstream stringStream(m_OSM.toStdString());
-
       openstudio::osversion::VersionTranslator vt;
-
       return vt.loadModel(stringStream);
     } else {
       return boost::none;
     }
   }
 
-  void ProjectImporter::processProjectList(QStringList pList) 
-  {
-
-    m_proList->clear();
-
-    foreach(QString itm, pList) {
-      m_proList->addItem(itm);
-    }
-
-    m_selectButton->setEnabled(true);
+  void ProjectImporter::closeEvent(QCloseEvent *event) {
+    emit finished();
+    event->accept();
   }
 
-  void ProjectImporter::processIFCList(QStringList iList) 
-  {
-
-    m_ifcList->clear();
-
-    foreach(QString itm, iList) {
-      m_ifcList->addItem(itm);
+  void ProjectImporter::keyPressEvent(QKeyEvent *event) {
+    if (event->key() == Qt::Key_Escape) {
+      emit finished();
+      event->accept();
+    } else {
+      event->ignore();
     }
-
-    m_loadButton->setEnabled(true);
-    m_okButton->setEnabled(true);
   }
 
   void ProjectImporter::processSucessCases(QString sucessCase) 
   {
     if (sucessCase == "createProject") {
-      m_statusBar->showMessage(tr("Project created, showing updated project list."), 2000);
       m_bimserverConnection->getAllProjects();
 
     } else if (sucessCase == "checkInIFC") {
-      m_statusBar->showMessage(tr("IFC file loaded, showing updated IFC file list."), 2000);
-      m_bimserverConnection->getIFCRevisionList(m_proID);
+      //m_bimserverConnection->getIFCRevisionList(m_proID);
 
     } else if (sucessCase == "login") {
       this->show();
-      m_statusBar->showMessage(tr("Login success!"), 2000);
       m_bimserverConnection->getAllProjects();
     }
   }
 
   void ProjectImporter::processFailureCases(QString failureCase) 
   {
-
-    m_statusBar->showMessage(failureCase, 2000);
+    //m_statusBar->showMessage(failureCase, 2000);
   } 
 
   void ProjectImporter::processBIMserverErrors() {
     this->hide();
-
     QMessageBox messageBox(this);
     messageBox.setText(tr("BIMserver disconnected")); 
     messageBox.setDetailedText(tr("BIMserver is not connected correctly. Please check if BIMserver is running and make sure your username and password are valid.\n"));
     messageBox.exec();
-
-    settingButton_clicked();
+    //settingButton_clicked();
   }
 
   void ProjectImporter::okButton_clicked() 
@@ -258,7 +205,6 @@ namespace bimserver {
       QString new_ifcString = QFileDialog::getOpenFileName(this,
         tr("Open IFC File"), ".",
         tr("IFC files (*.ifc)"));
-
     
       if (!new_ifcString.isEmpty()) {
         m_statusBar->showMessage("IFC File " + new_ifcString + " loaded.", 2000);
