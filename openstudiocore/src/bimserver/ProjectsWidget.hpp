@@ -17,12 +17,8 @@
 *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 **********************************************************************/
 
-#ifndef BIMSERVER_PROJECTIMPORTER_HPP
-#define BIMSERVER_PROJECTIMPORTER_HPP
-
-#include "BIMserverAPI.hpp"
-#include "BIMserverConnection.hpp"
-#include "IFCTabController.hpp"
+#ifndef BIMSERVER_PROJECTSWIDGET_HPP
+#define BIMSERVER_PROJECTSWIDGET_HPP
 
 #include "../model/Model.hpp"
 #include "../shared_gui_components/OSDialog.hpp"
@@ -40,50 +36,44 @@
 namespace openstudio {
 namespace bimserver {
 
-  class BIMSERVER_API ProjectImporter: public OSDialog
-  {
+class ProjectsWidget : public QWidget
+{
     Q_OBJECT
-
     public:
+  
+    //ProjectsWidget(const model::Model & model, QWidget * parent = nullptr);
+    ProjectsWidget(QWidget * parent = nullptr);
+    ~ProjectsWidget() {}
 
-    /// Default constructor
-    ProjectImporter(QWidget *parent);
-    /// Virtual destructor
-    ~ProjectImporter();
-    /// Start importing IFC workflow
-    boost::optional<model::Model> run();
-    /// Reimplemented the close event and guide it to the run() function
-    void closeEvent(QCloseEvent *event) override;
-    /// Reimplemented the key press event of ESC and guide it to the run() function
-    void keyPressEvent(QKeyEvent *event) override;
+    public slots:
 
-    /// process success cases for createProject, checkInIFC, and login
-    void processSucessCases(QString sucessCase);
-    /// process all failure cases if BIMserver outputs an exception. Print it 
-    void processFailureCases(QString failureCase);
-    /// process if BIMserver is not connected.
-    void processBIMserverErrors();
+    void clearList();
+    void processProjectList(QStringList PList);
 
     signals:
-    /// OSM String is retrieved.
-    void finished();
+
+    void newproject(QString new_proString);
+    void updated(QString new_proID);
 
     private:
-
-    QString     m_OSM;
-    QEventLoop  *m_waitForOSM;  
-    QSettings   *m_settings;
-    IFCTabController *m_IFCTabController;  
-    BIMserverConnection *m_bimserverConnection;
     
-    SettingsWidget * m_settingsWidget;
-    ProjectsWidget * m_projectsWidget;
-    FilesWidget * m_filesWidget;
-    ImportWidget * m_importWidget;
+    //model::Model m_model;
+
+    QPushButton *newButton;
+    QPushButton *selectButton;
+
+    QListWidget *m_proList;
+    // QListWidget *m_ifcList;
+    
+    private slots:
+
+    void newButton_clicked();
+    void selectButton_clicked();
+
   };
 
 } // bimserver
 } // openstudio
 
 #endif 
-// BIMSERVER_PROJECTIMPORTER_HPP 
+//BIMSERVER_PROJECTSWIDGET_HPP
