@@ -23,6 +23,8 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
 
 namespace openstudio {
 namespace bimserver {
@@ -73,8 +75,10 @@ namespace bimserver {
     if (newDialog.exec()==QDialog::Accepted) {
       QString new_proString = new_nameEdit.text();
       emit newproject(new_proString);
-      //m_bimserverConnection->createProject(new_proString);
     } else {
+      QMessageBox messageBox(this);
+      messageBox.setText(tr("New Project Not Created")); 
+      messageBox.exec();
     }
   }
 
@@ -84,6 +88,9 @@ namespace bimserver {
       QString m_proID = m_proList->currentItem()->text().section(":", 0, 0);
       emit updated(m_proID);
       } else {
+      QMessageBox messageBox(this);
+      messageBox.setText(tr("Select Project First")); 
+      messageBox.exec();
     }
   }
 
@@ -95,11 +102,9 @@ namespace bimserver {
   void ProjectsWidget::processProjectList(QStringList pList) 
   {
     m_proList->clear();
-
     foreach(QString itm, pList) {
       m_proList->addItem(itm);
     }
-    //m_selectButton->setEnabled(true);
   }
 
 } // bimserver

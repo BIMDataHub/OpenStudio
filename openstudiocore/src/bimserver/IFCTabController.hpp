@@ -30,9 +30,9 @@
 namespace openstudio {
 namespace bimserver {
 
-class OSItemId;
+//class OSItemId;
 
-class MainTabView;
+//class MainTabView;
 
 class SettingsWidget;
 
@@ -60,32 +60,32 @@ class IFCTabController : public MainTabController
     IMPORT
   };
 
-  QSettings *m_settings;
-  
+  SettingsWidget * m_settingsWidget;
+  ProjectsWidget * m_projectsWidget;
+  FilesWidget * m_filesWidget;
+  ImportWidget * m_importWidget;
+
   signals:
-  /// OSM String is retrieved.
-  void finished();
 
   public slots:
+  /*
   void processOSMRetrieved(QString osmString);
   void processSettings(QSettings *);
   void resetProID(QString newID);
   void resetIFCID(QString newID);
   void newProject(QString newID);
   void newFile(QString newID);
+  */
 
 private:
-  SettingsWidget * m_settingsWidget;
-  ProjectsWidget * m_projectsWidget;
-  FilesWidget * m_filesWidget;
-  ImportWidget * m_importWidget;
-
+  bool m_isIP;
+  /*
   QString     m_OSM;
   QString     m_proID;
   QString     m_ifcID;
-
-  bool m_isIP;
+  QSettings   *m_settings;
   BIMserverConnection *m_bimserverConnection;
+  */
 };
 
 } // bimserver

@@ -57,12 +57,20 @@ namespace bimserver {
     /// Reimplemented the key press event of ESC and guide it to the run() function
     void keyPressEvent(QKeyEvent *event) override;
 
+    public slots:
+
     /// process success cases for createProject, checkInIFC, and login
     void processSucessCases(QString sucessCase);
     /// process all failure cases if BIMserver outputs an exception. Print it 
     void processFailureCases(QString failureCase);
     /// process if BIMserver is not connected.
     void processBIMserverErrors();
+    void processOSMRetrieved(QString osmString);
+    void processSettings(QSettings *);
+    void resetProID(QString newID);
+    void resetIFCID(QString newID);
+    void newProject(QString newID);
+    void newFile(QString newID);
 
     signals:
     /// OSM String is retrieved.
@@ -99,6 +107,7 @@ namespace bimserver {
       void loadButton_clicked();
       void selectButton_clicked();
       void settingButton_clicked(); 
+
   };
 
 } // bimserver
