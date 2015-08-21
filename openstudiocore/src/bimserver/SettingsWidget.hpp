@@ -42,12 +42,14 @@ class SettingsWidget : public QWidget
 
     public:
     
-    //SettingsWidget(const model::Model & model, QWidget * parent = nullptr);
     SettingsWidget( QWidget * parent = nullptr );
 
     virtual ~SettingsWidget() {}
 
-    QSettings   *m_settings;
+    QLineEdit *set_baddEdit;
+    QLineEdit *set_bportEdit;
+    QLineEdit *set_unameEdit;
+    QLineEdit *set_upassEdit;
 
     signals:
 
@@ -59,13 +61,11 @@ class SettingsWidget : public QWidget
 
     public slots:
 
-    void accepted();
+    void okButton_clicked();
 
-    void rejected();
+    void cancelButton_clicked();
 
     private:
-
-    //model::Model m_model;
     
     QLabel *set_introLabel;
     QLabel *set_baddLabel;
@@ -73,15 +73,11 @@ class SettingsWidget : public QWidget
     QLabel *set_unameLabel;
     QLabel *set_upassLabel;
 
-    QLineEdit *set_baddEdit;
-    QLineEdit *set_bportEdit;
-    QLineEdit *set_unameEdit;
-    QLineEdit *set_upassEdit;
-
     QPushButton *set_okButton;
-
     QPushButton *set_cancelButton;
+    QSettings   *m_settings;
 
+    //QString address, port, usrname, psw;
 };
 
 } // bimserver

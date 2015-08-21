@@ -34,7 +34,6 @@
 namespace openstudio {
 namespace bimserver{
 
-//IFCTabController::IFCTabController(const model::Model & model)
   IFCTabController::IFCTabController(bool isIP)
     : MainTabController(new IFCTabView()),
       m_settingsWidget(nullptr),
@@ -59,19 +58,9 @@ namespace bimserver{
     addQObject(m_importWidget);
     this->mainContentWidget()->addSubTab("Import", m_importWidget, IMPORT); 
 
-    m_settings = new QSettings("OpenStudio", "BIMserverConnection");
-    m_bimserverConnection = nullptr;
-
-    //connection
-    connect(m_projectsWidget, &ProjectsWidget::newproject,  this, &IFCTabController::newProject);
-    connect(m_projectsWidget, &ProjectsWidget::updated,     this, &IFCTabController::resetProID);
-    connect(m_filesWidget,    &FilesWidget::newfile,        this, &IFCTabController::newFile);
-    connect(m_filesWidget,    &FilesWidget::updated,        this, &IFCTabController::resetIFCID);
-    connect(m_settingsWidget, &SettingsWidget::updated,     this, &IFCTabController::processSettings);
-    connect(m_settingsWidget, &SettingsWidget::reset,       m_projectsWidget, &ProjectsWidget::clearList);
-    connect(m_settingsWidget, &SettingsWidget::reset,       m_filesWidget, &FilesWidget::clearList);
   }
 
+/*
   void IFCTabController::processSettings(QSettings *m_settings)
   {
     QString addr, port, usrname, psw;
@@ -129,6 +118,7 @@ namespace bimserver{
     m_bimserverConnection->checkInIFCFile(m_proID, newID);
     // TODO-refresh  
   }
-
+*/
+  
 }
 }

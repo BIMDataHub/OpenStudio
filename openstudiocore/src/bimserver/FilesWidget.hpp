@@ -58,8 +58,8 @@ namespace bimserver {
     
     //model::Model m_model;
 
-    QPushButton *newButton;
-    QPushButton *okButton;
+    QPushButton *m_newButton;
+    QPushButton *m_okButton;
 
     // QListWidget *m_proList;
     QListWidget *m_ifcList;

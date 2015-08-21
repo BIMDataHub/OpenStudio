@@ -39,15 +39,39 @@ namespace bimserver {
   ProjectImporter::ProjectImporter(QWidget *parent) :
     OSDialog(parent) 
   {
+    //QMessageBox messageBox1(this);
+    //messageBox1.setText(tr("Stage AI")); 
+    //messageBox1.exec();
 
-    //m_mainTabController = std::shared_ptr<MainTabController>(new IFCTabController());
-    //mainLayout->addWidget(m_mainTabController->mainContentWidget());
     m_IFCTabController = new IFCTabController(true);
     this->upperLayout()->addWidget(m_IFCTabController->mainContentWidget());
-
+    
     m_bimserverConnection = nullptr;
     m_waitForOSM = new QEventLoop(this);
-    m_settings = m_IFCTabController->m_settings;
+    //m_settings = m_IFCTabController->m_settings;
+
+    m_settingsWidget = m_IFCTabController->m_settingsWidget;
+    m_projectsWidget = m_IFCTabController->m_projectsWidget;
+    m_filesWidget = m_IFCTabController->m_filesWidget;
+    m_importWidget = m_IFCTabController->m_importWidget;
+
+    //QMessageBox messageBox2(this);
+    //messageBox2.setText(tr("Stage AII")); 
+    //messageBox2.exec();
+
+    connect(m_settingsWidget, &SettingsWidget::reset,       m_projectsWidget, &ProjectsWidget::clearList);
+    connect(m_settingsWidget, &SettingsWidget::reset,       m_filesWidget, &FilesWidget::clearList);
+    connect(m_settingsWidget, &SettingsWidget::updated,     this, &ProjectImporter::processSettings);
+    connect(m_projectsWidget, &ProjectsWidget::newproject,  this, &ProjectImporter::newProject);
+    connect(m_projectsWidget, &ProjectsWidget::updated,     this, &ProjectImporter::resetProID);
+    connect(m_filesWidget,    &FilesWidget::newfile,        this, &ProjectImporter::newFile);
+    connect(m_filesWidget,    &FilesWidget::updated,        this, &ProjectImporter::resetIFCID);
+
+    //QMessageBox messageBox3(this);
+    //messageBox3.setText(tr("Stage AIII")); 
+    //messageBox3.exec();
+
+    this->show();
   }
 
   ProjectImporter::~ProjectImporter() 
@@ -56,32 +80,12 @@ namespace bimserver {
 
   boost::optional<model::Model> ProjectImporter::run() 
   { 
-    if (m_settings->contains("addr") && m_settings->contains("port") && m_settings->contains("usrname") && m_settings->contains("psw")) {
-      QString addr = m_settings->value("addr").toString();
-      QString port = m_settings->value("port").toString();
-      QString usrname = m_settings->value("usrname").toString();
-      QString psw = m_settings->value("psw").toString();
-
-      m_bimserverConnection = new BIMserverConnection(this, addr, port);
-
-      connect(m_bimserverConnection, &BIMserverConnection::osmStringRetrieved, m_IFCTabController, &IFCTabController::processOSMRetrieved);
-      connect(m_bimserverConnection, &BIMserverConnection::listAllProjects, m_projectsWidget, &ProjectsWidget::processProjectList);
-      connect(m_bimserverConnection, &BIMserverConnection::listAllIFCRevisions, m_filesWidget, &FilesWidget::processIFCList);
-      connect(m_bimserverConnection, &BIMserverConnection::operationSucceeded, this, &ProjectImporter::processSucessCases);
-      connect(m_bimserverConnection, &BIMserverConnection::errorOccured, this, &ProjectImporter::processFailureCases);
-      connect(m_bimserverConnection, &BIMserverConnection::bimserverError, this, &ProjectImporter::processBIMserverErrors);
-      connect(this, SIGNAL(finished()), m_waitForOSM, SLOT(quit()));
-
-      m_bimserverConnection->login(usrname, psw);
-
-    } else {
-      QMessageBox messageBox(this);
-      messageBox.setText(tr("BIMserver disconnected")); 
-      messageBox.setDetailedText(tr("BIMserver is not connected correctly. Please check if BIMserver is running and make sure your username and password are valid.\n"));
-      messageBox.exec();
-      this->show();
-    }
-
+    /*
+    QMessageBox messageBox(this);
+    messageBox.setText(tr("ProjectImporter-Run")); 
+    messageBox.exec();
+    */
+    
     //execute event loop
     m_waitForOSM->exec();
 
@@ -118,22 +122,87 @@ namespace bimserver {
       //m_bimserverConnection->getIFCRevisionList(m_proID);
 
     } else if (sucessCase == "login") {
-      this->show();
+      //this->show();
       m_bimserverConnection->getAllProjects();
     }
   }
 
   void ProjectImporter::processFailureCases(QString failureCase) 
   {
-    //m_statusBar->showMessage(failureCase, 2000);
+    QMessageBox messageBox(this);
+    messageBox.setText(tr("BIMserver Failed")); 
+    messageBox.setDetailedText(failureCase);
+    messageBox.exec();
+    //if(!this->show())
+      this->show();
   } 
 
   void ProjectImporter::processBIMserverErrors() {
-    this->hide();
+    //this->hide();
     QMessageBox messageBox(this);
-    messageBox.setText(tr("BIMserver disconnected")); 
-    messageBox.setDetailedText(tr("BIMserver is not connected correctly. Please check if BIMserver is running and make sure your username and password are valid.\n"));
+    messageBox.setText(tr("BIMserver Error")); 
     messageBox.exec();
+    //if(!this->show())
+      this->show();
+  }
+
+  void ProjectImporter::processSettings(QSettings *m_settings)
+  {
+    QString addr, port, usrname, psw;
+
+    if (m_settings->contains("addr")) {
+      addr = m_settings->value("addr").toString();
+    }
+
+    if (m_settings->contains("port")) {
+      port = m_settings->value("port").toString();
+    }
+  
+    if (m_settings->contains("usrname")) {
+      usrname = m_settings->value("usrname").toString();
+    }
+
+    if (m_settings->contains("psw")) {
+      psw = m_settings->value("psw").toString();
+    }
+
+    m_bimserverConnection = new BIMserverConnection(this, addr, port);
+    connect(m_bimserverConnection, &BIMserverConnection::osmStringRetrieved, this, &ProjectImporter::processOSMRetrieved);
+    connect(m_bimserverConnection, &BIMserverConnection::listAllProjects, m_projectsWidget, &ProjectsWidget::processProjectList);
+    connect(m_bimserverConnection, &BIMserverConnection::listAllIFCRevisions, m_filesWidget, &FilesWidget::processIFCList);
+    connect(m_bimserverConnection, &BIMserverConnection::operationSucceeded, this, &ProjectImporter::processSucessCases);
+    connect(m_bimserverConnection, &BIMserverConnection::errorOccured, this, &ProjectImporter::processFailureCases);
+    connect(m_bimserverConnection, &BIMserverConnection::bimserverError, this, &ProjectImporter::processBIMserverErrors);
+    connect(this, SIGNAL(finished()), m_waitForOSM, SLOT(quit()));
+    m_bimserverConnection->login(usrname, psw);
+  }
+
+  void ProjectImporter::processOSMRetrieved(QString osmString) 
+  {
+    m_OSM = osmString;
+    emit finished();
+  }
+
+  void ProjectImporter::newProject(QString newID)
+  {
+    m_bimserverConnection->createProject(newID);
+  }
+
+  void ProjectImporter::newFile(QString newID)
+  {
+    m_bimserverConnection->checkInIFCFile(m_proID, newID);
+  }
+
+  void ProjectImporter::resetProID(QString newID)
+  {
+    m_proID = newID;
+    m_bimserverConnection->getIFCRevisionList(m_proID);
+  }
+
+  void ProjectImporter::resetIFCID(QString newID)
+  {
+    m_ifcID = newID;
+    m_bimserverConnection->download(m_ifcID);
   }
 
 } // bimserver

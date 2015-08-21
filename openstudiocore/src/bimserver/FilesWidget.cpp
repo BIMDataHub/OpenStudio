@@ -23,6 +23,7 @@
 #include <QListWidget>
 #include <QPushButton>
 #include <QFileDialog>
+#include <QMessageBox>
 
 namespace openstudio {
 namespace bimserver {
@@ -38,44 +39,40 @@ namespace bimserver {
 
     m_ifcList = new QListWidget(this);
 
-    QPushButton *newButton = new QPushButton(tr("New IFC File"), this);
-    connect(newButton, SIGNAL(clicked()),this, SLOT(newButton_clicked()));
-    QPushButton *okButton = new QPushButton(tr("Okay"), this);
-    connect(okButton, SIGNAL(clicked()), this, SLOT(okButton_clicked()));
+    m_newButton = new QPushButton(tr("New IFC File"), this);
+    connect(m_newButton, SIGNAL(clicked()),this, SLOT(newButton_clicked()));
+    m_okButton = new QPushButton(tr("Okay"), this);
+    connect(m_okButton, SIGNAL(clicked()), this, SLOT(okButton_clicked()));
 
     fileLayout->addWidget(m_ifcList,0,0,1,2);
-    fileLayout->addWidget(newButton,1,0,1,1); 
-    fileLayout->addWidget(okButton,1,1,1,1); 
+    fileLayout->addWidget(m_newButton,1,0,1,1); 
+    fileLayout->addWidget(m_okButton,1,1,1,1); 
   }
 
   void FilesWidget::newButton_clicked() 
   {
-    //if (m_proList->currentItem()) {
-      //QString m_proID = m_proList->currentItem()->text().section(":", 0, 0);
-      QString new_ifcString = QFileDialog::getOpenFileName(this,
-      tr("Open IFC File"), ".",
-      tr("IFC files (*.ifc)"));
+    QString new_ifcString = QFileDialog::getOpenFileName(this,
+    tr("Open IFC File"), ".",
+    tr("IFC files (*.ifc)"));
 
-      if (!new_ifcString.isEmpty()) {
-        //m_statusBar->showMessage("IFC File " + new_ifcString + " loaded.", 2000);
-        emit newfile(new_ifcString);
-        //m_bimserverConnection->checkInIFCFile(m_proID, new_ifcString);
-      }
-    //}  else {
-      //m_statusBar->showMessage(tr("Please select a project to check in a new IFC version."), 2000);
-    //}
+    if (!new_ifcString.isEmpty()) {
+      emit newfile(new_ifcString);
+    } else {
+      QMessageBox messageBox(this);
+      messageBox.setText(tr("New IFC File Failed")); 
+      messageBox.exec();
+    }
   }
 
   void FilesWidget::okButton_clicked() 
   {
     if (m_ifcList->currentItem()) {
       QString m_ifcID = m_ifcList->currentItem()->text().section(":", 0, 0);
-
       emit updated(m_ifcID);
-      //m_bimserverConnection->download(m_ifcID);
-
     } else {
-      //m_statusBar->showMessage(tr("Please select a IFC version before proceeding."), 2000);
+      QMessageBox messageBox(this);
+      messageBox.setText(tr("Select IFC File First")); 
+      messageBox.exec();
     }
   }
 

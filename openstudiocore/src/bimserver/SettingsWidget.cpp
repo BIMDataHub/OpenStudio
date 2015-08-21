@@ -26,38 +26,39 @@
 #include <QFrame>
 #include <QRadioButton>
 #include <QButtonGroup>
-#include <QPushButton>
 #include <QLineEdit>
+#include <QPushButton>
+#include <QMessageBox>
 
 namespace openstudio {
 namespace bimserver{
 
-  //SettingsWidget::SettingsWidget(const model::Model & model, QWidget * parent)
   SettingsWidget::SettingsWidget(QWidget * parent)
     : QWidget(parent)
   {
   // Main Layout
 
     auto m_setLayout = new QGridLayout;
-    //setDialog.setWindowTitle(tr("BIMserver Settings"));
     setLayout(m_setLayout);
 
-    QLabel *set_introLabel = new QLabel(tr("Please enter the BIMserver information: "), this);
-    QLabel *set_baddLabel = new QLabel(tr("BIMserver Address: http://"), this);
-    QLineEdit *set_baddEdit = new QLineEdit(this);
+    set_introLabel = new QLabel(tr("Please enter the BIMserver information: "), this);
+    set_baddLabel = new QLabel(tr("BIMserver Address: http://"), this);
+    this->set_baddEdit = new QLineEdit(this);
     set_baddEdit->setPlaceholderText("eg: 127.0.0.1");
-    QLabel *set_bportLabel = new QLabel(tr("BIMserver Port:"), this);
-    QLineEdit *set_bportEdit = new QLineEdit(this);
+    set_bportLabel = new QLabel(tr("BIMserver Port:"), this);
+    this->set_bportEdit = new QLineEdit(this);
     set_bportEdit->setPlaceholderText("eg: 8082");
-    QLabel *set_unameLabel = new QLabel(tr("User Name:"), this);
-    QLineEdit *set_unameEdit = new QLineEdit(this);
+    set_unameLabel = new QLabel(tr("User Name:"), this);
+    this->set_unameEdit = new QLineEdit(this);
     set_unameEdit->setPlaceholderText("eg: admin@bimserver.org");
-    QLabel *set_upassLabel = new QLabel(tr("Password: "), this);
-    QLineEdit *set_upassEdit = new QLineEdit(this);
+    set_upassLabel = new QLabel(tr("Password: "), this);
+    this->set_upassEdit = new QLineEdit(this);
     set_upassEdit->setPlaceholderText("eg: admin");
-    QPushButton *set_okButton = new QPushButton(tr("Connect"), this);
-    QPushButton *set_cancelButton = new QPushButton(tr("Cancel"), this);  
+    
+    set_okButton = new QPushButton(tr("Connect"), this);
+    set_cancelButton = new QPushButton(tr("Cancel"), this);  
 
+    /*
     m_settings = new QSettings("OpenStudio", "BIMserverConnection");
 
     if (m_settings->contains("addr")) {
@@ -79,6 +80,7 @@ namespace bimserver{
       QString psw = m_settings->value("psw").toString();
       set_upassEdit->setText(psw);
     }
+    */
 
     m_setLayout->addWidget(set_introLabel,0,0,1,2);
     m_setLayout->addWidget(set_baddLabel,1,0,1,1);
@@ -91,33 +93,56 @@ namespace bimserver{
     m_setLayout->addWidget(set_upassEdit,4,1,1,1);
     m_setLayout->addWidget(set_okButton,5,0,1,1);
     m_setLayout->addWidget(set_cancelButton,5,1,1,1); 
+    
+    /*
+    address = set_baddEdit->text();
+    port = set_bportEdit->text();
+    usrname = set_unameEdit->text();
+    psw = set_upassEdit->text();
+    */
 
-    connect(set_okButton, SIGNAL(clicked()), this, SLOT(accepted()));
-    connect(set_cancelButton, SIGNAL(clicked()), this, SLOT(rejected()));
+    connect(set_okButton, SIGNAL(clicked()), this, SLOT(okButton_clicked()));
+    connect(set_cancelButton, SIGNAL(clicked()), this, SLOT(cancelButton_clicked()));
+
   }
 
-  void SettingsWidget::accepted()
+  void SettingsWidget::okButton_clicked()
   {
+    /*
+    QMessageBox messageBox(this);
+    messageBox.setText(tr("Test")); 
+    messageBox.exec();
+    */
+    
     QString address = set_baddEdit->text();
     QString port = set_bportEdit->text();
     QString usrname = set_unameEdit->text();
     QString psw = set_upassEdit->text();
 
-    if (!address.isEmpty() && !port.isEmpty() && !usrname.isEmpty() && !psw.isEmpty())
+    //QMessageBox::information(this,"Add",address);  
+
+    if (!address.isEmpty() && !port.isEmpty() 
+      && !usrname.isEmpty() && !psw.isEmpty())
     { 
+      m_settings = new QSettings("OpenStudio", "BIMserverConnection");
       m_settings->setValue("addr", address);
       m_settings->setValue("port", port);
-      m_settings->setValue("usrname",usrname);
+      m_settings->setValue("usrname", usrname);
       m_settings->setValue("psw", psw);
+      
       emit updated(m_settings);
     }
+      
     else {
       // clear both m_proList and m_ifcList
+      QMessageBox messageBox(this);
+      messageBox.setText(tr("User Credentials Illegal")); 
+      messageBox.exec();
       emit reset();
     }
   } 
 
-  void SettingsWidget::rejected()
+  void SettingsWidget::cancelButton_clicked()
   {
     //if (this->isHidden()) {
     emit finished();
