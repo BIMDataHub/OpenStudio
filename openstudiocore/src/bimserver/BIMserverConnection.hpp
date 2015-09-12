@@ -59,6 +59,8 @@ namespace bimserver {
     void getAllProjects();
     /// create new project
     void createProject(QString projectName);
+    /// delete a project
+    void deleteProject(QString projectID);
     /// check in new ifc file
     void checkInIFCFile(QString projectID, QString IFCFilePath);
     /// get all revisions of IFC files of a project
@@ -97,6 +99,8 @@ namespace bimserver {
     void processGetDownloadDataRequest(QNetworkReply *rep);
     /// create new project
     void processCreateProjectRequest(QNetworkReply *rep);
+    /// delete project
+    void processDeleteProjectRequest(QNetworkReply *rep);
     /// get ifc deserializer
     void processGetDeserializerRequest(QNetworkReply *rep);
     /// checkIn new IFC
@@ -113,6 +117,7 @@ namespace bimserver {
     void sendDownloadRequest();
     void sendGetDownloadDataRequest();
     void sendCreateProjectRequest(QString projectName);
+    void sendDeleteProjectRequest(QString projectID);
     void sendGetDeserializerRequest();
     void sendCheckInIFCRequest(QString IFCFilePath);
     void sendGetProjectByIDRequest(QString projectID);
