@@ -51,6 +51,8 @@ class SettingsWidget : public QWidget
     QLineEdit *set_unameEdit;
     QLineEdit *set_upassEdit;
 
+    QLabel *set_sevStatus;
+
     signals:
 
     void reset();
@@ -62,8 +64,8 @@ class SettingsWidget : public QWidget
     public slots:
 
     void okButton_clicked();
-
-    void cancelButton_clicked();
+    //void successStatus();
+    //void failedStatus();
 
     private:
     
@@ -77,7 +79,6 @@ class SettingsWidget : public QWidget
     QPushButton *set_cancelButton;
     QSettings   *m_settings;
 
-    //QString address, port, usrname, psw;
 };
 
 } // bimserver

@@ -21,6 +21,12 @@
 #define BIMSERVER_IFCTABVIEW_HPP
 
 #include "../openstudio_lib/SubTabView.hpp"
+#include <QWidget>
+#include <vector>
+
+class QStackedWidget;
+class QPushButton;
+class QLabel;
 
 namespace openstudio {
 namespace bimserver {	
@@ -30,10 +36,32 @@ class IFCTabView : public MainTabView
   Q_OBJECT
 
 public:
-  IFCTabView(QWidget * parent = nullptr);
-
+  IFCTabView(const QString & tabLabel, bool hasSubTabs, QWidget * parent = nullptr);
+  bool addSubTab(const QString & subTabLabel, QWidget * widget, int id);
+  void setHasSubTab(bool hasSubTab);
   virtual ~IFCTabView() {}
 
+private slots:
+  void select() ;
+
+signals:
+  void tabSelected(int id);
+
+protected:
+  void setCurrentIndex(int index);
+
+private:
+  QLabel * m_tabLabel;
+  QStackedWidget * m_stackedWidget;
+  QWidget * m_mainWidget;
+
+  std::vector<QString> m_selectedPixmaps;
+  std::vector<QString> m_neighborSelectedPixmaps;
+  std::vector<QString> m_unSelectedPixmaps;
+  std::vector<QPushButton *> m_tabButtons; 
+  std::vector<int> m_ids; 
+
+  bool m_hasSubTab;
 };
 
 } // bimserver

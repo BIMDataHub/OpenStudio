@@ -22,9 +22,11 @@
 
 #include "../model/Model.hpp"
 #include "../shared_gui_components/OSDialog.hpp"
+#include "../shared_gui_components/BusyWidget.hpp"
 #include "../openstudio_lib/MainTabView.hpp"
 #include "../openstudio_lib/MainTabController.hpp"
 
+#include <QLabel>
 #include <QDialog>
 #include <QListWidget>
 #include <QStatusBar>
@@ -49,7 +51,9 @@ namespace bimserver {
     void finished();
 
     private:
-    QPushButton *cancelButton;  
+    QPushButton *cancelButton; 
+    QLabel *imp_impLabel; 
+    BusyWidget *imp_busyWig;
 
     private slots:
     void app_ended(); 

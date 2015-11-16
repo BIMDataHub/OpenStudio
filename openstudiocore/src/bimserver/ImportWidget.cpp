@@ -20,6 +20,8 @@
 #include "ImportWidget.hpp"
 
 #include <QGridLayout>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QButtonGroup>
 #include <QPushButton>
 
@@ -31,14 +33,29 @@ namespace bimserver {
     : QWidget(parent)
     //m_model(model)
   {
-    // MainLayout
-    auto importLayout = new QGridLayout;
-    setLayout(importLayout);
+    //auto importLayout = new QGridLayout;
+    auto m_impLayout = new QHBoxLayout;
+    auto m_impLeftLayout = new QVBoxLayout;
+    auto m_impMiddleLayout = new QVBoxLayout;
+    auto m_impRightLayout = new QVBoxLayout;
 
-    QPushButton *cancelButton = new QPushButton(tr("Cancel"), this);
+    imp_impLabel = new QLabel(tr("<html><b>Importing file ...</b</html>"), this);
+    imp_busyWig = new BusyWidget(this);
+    cancelButton = new QPushButton(tr("Cancel Import"), this);
     connect(cancelButton, SIGNAL(clicked()), this, SLOT(app_ended()));
 
-    importLayout->addWidget(cancelButton,1,1,1,1);
+    m_impLeftLayout->addWidget(imp_impLabel,1,Qt::AlignLeft);
+    m_impLeftLayout->addSpacing(180);
+    m_impMiddleLayout->addSpacing(60);
+    m_impMiddleLayout->addWidget(imp_busyWig,1,Qt::AlignCenter);
+    m_impMiddleLayout->addSpacing(60);
+    m_impRightLayout->addSpacing(180);
+    m_impRightLayout->addWidget(cancelButton,1,Qt::AlignRight);
+
+    m_impLayout->addLayout(m_impLeftLayout,1);
+    m_impLayout->addLayout(m_impMiddleLayout,1);
+    m_impLayout->addLayout(m_impRightLayout,1);
+    setLayout(m_impLayout);
   }
 
   void ImportWidget::app_ended() 

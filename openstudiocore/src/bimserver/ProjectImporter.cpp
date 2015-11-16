@@ -37,27 +37,29 @@ namespace openstudio {
 namespace bimserver {
 
   ProjectImporter::ProjectImporter(QWidget *parent) :
-    OSDialog(parent) 
+    OSDialog(parent)
   {
-    //QMessageBox messageBox1(this);
-    //messageBox1.setText(tr("Stage AI")); 
-    //messageBox1.exec();
+
+    #ifdef Q_OS_MAC
+      setWindowFlags(Qt::WindowCloseButtonHint);
+    #else
+      setWindowFlags(Qt::WindowCloseButtonHint);
+    #endif
+
+    this->okButton()->hide();
+    this->cancelButton()->hide();
+    this->setLayoutContentsMargins(QMargins(0,50,0,0));
 
     m_IFCTabController = new IFCTabController(true);
     this->upperLayout()->addWidget(m_IFCTabController->mainContentWidget());
     
     m_bimserverConnection = nullptr;
     m_waitForOSM = new QEventLoop(this);
-    //m_settings = m_IFCTabController->m_settings;
 
     m_settingsWidget = m_IFCTabController->m_settingsWidget;
     m_projectsWidget = m_IFCTabController->m_projectsWidget;
     m_filesWidget = m_IFCTabController->m_filesWidget;
     m_importWidget = m_IFCTabController->m_importWidget;
-
-    //QMessageBox messageBox2(this);
-    //messageBox2.setText(tr("Stage AII")); 
-    //messageBox2.exec();
 
     connect(m_settingsWidget, &SettingsWidget::reset,       m_projectsWidget, &ProjectsWidget::clearList);
     connect(m_settingsWidget, &SettingsWidget::reset,       m_filesWidget, &FilesWidget::clearList);
@@ -66,10 +68,7 @@ namespace bimserver {
     connect(m_projectsWidget, &ProjectsWidget::updated,     this, &ProjectImporter::resetProID);
     connect(m_filesWidget,    &FilesWidget::newfile,        this, &ProjectImporter::newFile);
     connect(m_filesWidget,    &FilesWidget::updated,        this, &ProjectImporter::resetIFCID);
-
-    //QMessageBox messageBox3(this);
-    //messageBox3.setText(tr("Stage AIII")); 
-    //messageBox3.exec();
+    connect(this, SIGNAL(loginStatus(QString)),             m_settingsWidget->set_sevStatus, SLOT(setText(QString)));
 
     this->show();
   }
@@ -80,11 +79,6 @@ namespace bimserver {
 
   boost::optional<model::Model> ProjectImporter::run() 
   { 
-    /*
-    QMessageBox messageBox(this);
-    messageBox.setText(tr("ProjectImporter-Run")); 
-    messageBox.exec();
-    */
     
     //execute event loop
     m_waitForOSM->exec();
@@ -124,6 +118,7 @@ namespace bimserver {
     } else if (sucessCase == "login") {
       //this->show();
       m_bimserverConnection->getAllProjects();
+      emit loginStatus(tr("<html><b>Sever Status:</b> Connected</html>"));
     }
   }
 
@@ -133,17 +128,15 @@ namespace bimserver {
     messageBox.setText(tr("BIMserver Failed")); 
     messageBox.setDetailedText(failureCase);
     messageBox.exec();
-    //if(!this->show())
-      this->show();
+    this->show();
   } 
 
   void ProjectImporter::processBIMserverErrors() {
-    //this->hide();
-    QMessageBox messageBox(this);
-    messageBox.setText(tr("BIMserver Error")); 
-    messageBox.exec();
-    //if(!this->show())
-      this->show();
+    //QMessageBox messageBox(this);
+    //messageBox.setText(tr("BIMserver Error")); 
+    //messageBox.exec();
+    //this->show();
+    emit loginStatus(tr("<html><b>Sever Status:</b> Unable to connect to server. Check your settings and make sure the BIMServer is running</html>"));
   }
 
   void ProjectImporter::processSettings(QSettings *m_settings)
