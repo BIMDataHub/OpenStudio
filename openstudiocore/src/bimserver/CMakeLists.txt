@@ -28,6 +28,8 @@ set(${target_name}_src
   ../openstudio_lib/MainTabView.hpp
   ../openstudio_lib/MainTabController.cpp
   ../openstudio_lib/MainTabController.hpp
+  ../shared_gui_components/BusyWidget.cpp
+  ../shared_gui_components/BusyWidget.hpp
   ../shared_gui_components/OSQObjectController.cpp
   ../shared_gui_components/OSQObjectController.hpp
 )
@@ -56,6 +58,7 @@ set(${target_name}_moc
   ../shared_gui_components/OSDialog.hpp
   ../openstudio_lib/MainTabView.hpp
   ../openstudio_lib/MainTabController.hpp
+  ../shared_gui_components/BusyWidget.hpp
   ../shared_gui_components/OSQObjectController.hpp
 )
 set(${target_name}_depends

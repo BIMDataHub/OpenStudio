@@ -37,6 +37,8 @@
 #include <QCloseEvent>
 #include <QKeyEvent>
 
+class QMargins;
+
 namespace openstudio {
 namespace bimserver {
 
@@ -75,6 +77,8 @@ namespace bimserver {
     signals:
     /// OSM String is retrieved.
     void finished();
+    /// Successful/Failed login at BIMServer
+    void loginStatus(QString);
 
     private:
 
@@ -83,30 +87,15 @@ namespace bimserver {
       QString     m_ifcID;
       QListWidget *m_proList;
       QListWidget *m_ifcList;
-      QStatusBar  *m_statusBar;
       QEventLoop  *m_waitForOSM;
       
       QSettings *m_settings;
-
-      QPushButton *m_okButton;
-      QPushButton *m_loadButton;
-      QPushButton *m_selectButton;
-
       FilesWidget * m_filesWidget;
       ImportWidget * m_importWidget;
       SettingsWidget * m_settingsWidget;
       ProjectsWidget * m_projectsWidget;
       IFCTabController *m_IFCTabController;  
       BIMserverConnection *m_bimserverConnection;
-
-    private slots:
-
-      void app_ended();
-      void okButton_clicked();
-      void newButton_clicked();
-      void loadButton_clicked();
-      void selectButton_clicked();
-      void settingButton_clicked(); 
 
   };
 

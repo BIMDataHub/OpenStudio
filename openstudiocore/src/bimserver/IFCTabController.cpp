@@ -35,7 +35,7 @@ namespace openstudio {
 namespace bimserver{
 
   IFCTabController::IFCTabController(bool isIP)
-    : MainTabController(new IFCTabView()),
+    : MainTabController(new IFCTabView("IFCTab", true)),
       m_settingsWidget(nullptr),
       m_projectsWidget(nullptr),
       m_filesWidget(nullptr),
