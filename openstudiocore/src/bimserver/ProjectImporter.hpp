@@ -72,6 +72,7 @@ namespace bimserver {
     void resetProID(QString newID);
     void resetIFCID(QString newID);
     void newProject(QString newID);
+    void rmvProject(QString newID);
     void newFile(QString newID);
 
     signals:

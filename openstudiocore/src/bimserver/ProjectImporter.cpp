@@ -65,6 +65,7 @@ namespace bimserver {
     connect(m_settingsWidget, &SettingsWidget::reset,       m_filesWidget, &FilesWidget::clearList);
     connect(m_settingsWidget, &SettingsWidget::updated,     this, &ProjectImporter::processSettings);
     connect(m_projectsWidget, &ProjectsWidget::newproject,  this, &ProjectImporter::newProject);
+    connect(m_projectsWidget, &ProjectsWidget::rmvproject,  this, &ProjectImporter::rmvProject);
     connect(m_projectsWidget, &ProjectsWidget::updated,     this, &ProjectImporter::resetProID);
     connect(m_filesWidget,    &FilesWidget::newfile,        this, &ProjectImporter::newFile);
     connect(m_filesWidget,    &FilesWidget::updated,        this, &ProjectImporter::resetIFCID);
@@ -197,6 +198,11 @@ namespace bimserver {
   void ProjectImporter::newProject(QString newID)
   {
     m_bimserverConnection->createProject(newID);
+  }
+
+  void ProjectImporter::rmvProject(QString newID)
+  {
+    m_bimserverConnection->deleteProject(newID);
   }
 
   void ProjectImporter::newFile(QString newID)
