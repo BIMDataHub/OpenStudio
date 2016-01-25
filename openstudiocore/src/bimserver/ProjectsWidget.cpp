@@ -42,12 +42,15 @@ namespace bimserver {
 
     QPushButton *newButton = new QPushButton(tr("New Project"), this);
     connect(newButton, SIGNAL(clicked()),this, SLOT(newButton_clicked()));
+    QPushButton *rmvButton = new QPushButton(tr("Delete Project"), this);
+    connect(rmvButton, SIGNAL(clicked()),this, SLOT(rmvButton_clicked()));
     QPushButton *selectButton = new QPushButton(tr("Select"), this);
     connect(selectButton, SIGNAL(clicked()), this, SLOT(selectButton_clicked()));
 
-    projectLayout->addWidget(m_proList,0,0,1,2);
-    projectLayout->addWidget(newButton,1,0,1,1); 
-    projectLayout->addWidget(selectButton,1,1,1,1);  
+    projectLayout->addWidget(m_proList,0,0,1,3);
+    projectLayout->addWidget(newButton,1,0,1,1);
+    projectLayout->addWidget(rmvButton,1,1,1,1); 
+    projectLayout->addWidget(selectButton,1,2,1,1);  
   }
 
   void ProjectsWidget::newButton_clicked() 
@@ -78,6 +81,18 @@ namespace bimserver {
     } else {
       QMessageBox messageBox(this);
       messageBox.setText(tr("New Project Not Created")); 
+      messageBox.exec();
+    }
+  }
+
+  void ProjectsWidget::rmvButton_clicked() 
+  {
+    if (m_proList->currentItem()) {
+      QString m_proID = m_proList->currentItem()->text().section(":", 0, 0);
+      emit rmvproject(m_proID);
+      } else {
+      QMessageBox messageBox(this);
+      messageBox.setText(tr("Select Project First")); 
       messageBox.exec();
     }
   }

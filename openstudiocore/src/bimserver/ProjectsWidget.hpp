@@ -53,6 +53,7 @@ class ProjectsWidget : public QWidget
     signals:
 
     void newproject(QString new_proString);
+    void rmvproject(QString new_proString);
     void updated(QString new_proID);
 
     private:
@@ -60,14 +61,15 @@ class ProjectsWidget : public QWidget
     //model::Model m_model;
 
     QPushButton *newButton;
+    QPushButton *rmvButton;
     QPushButton *selectButton;
 
     QListWidget *m_proList;
-    // QListWidget *m_ifcList;
     
     private slots:
 
     void newButton_clicked();
+    void rmvButton_clicked();
     void selectButton_clicked();
 
   };
