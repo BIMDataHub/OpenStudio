@@ -376,6 +376,21 @@ namespace bimserver {
     }
   }
 
+   void BIMserverConnection::renameProject(QString projectName) {
+
+    if (!m_operationDone) {
+      emit errorOccured(QString("The last process has not end yet. Please wait and try again."));
+      return;
+    }
+    m_operationDone = false;
+
+    if (!projectName.isEmpty()) {
+      sendCreateProjectRequest(projectName);
+    } else {
+      emit errorOccured(QString("Project Name is empty!"));
+    }
+  }
+
   void BIMserverConnection::sendCreateProjectRequest(QString projectName) {
     
     QJsonObject parameters;
@@ -404,7 +419,60 @@ namespace bimserver {
     
   }
 
+    void BIMserverConnection::sendRenameProjectRequest(QString projectName) {
+    
+    QJsonObject parameters;
+    QString projectID = projectName.section(":", 0, 0);
+    QString newName = projectName.section(":", 1, 1);
+    parameters["oid"] = projectID;
+    parameters["name"] = newName;
+    QJsonObject request;
+    request["interface"] = QJsonValue(QString("Bimsie1ServiceInterface"));
+    request["method"] = QJsonValue(QString("updateProject"));
+    request["parameters"] = parameters;
+    QJsonObject renameProjectRequest;
+    renameProjectRequest["token"] = QJsonValue(m_token);
+    renameProjectRequest["request"] = request;
+
+    QJsonDocument doc;
+    doc.setObject(renameProjectRequest);
+
+    QByteArray renameProjectRequestJson = doc.toJson();
+
+    //setup network connection
+    QNetworkRequest qNetworkRequest(m_bimserverURL);
+    qNetworkRequest.setRawHeader("Content-Type", "application/json");
+
+    // disconnect all signals from m_networkManager to this
+    disconnect(m_networkManager, nullptr, this, nullptr);
+    connect(m_networkManager, &QNetworkAccessManager::finished, this, &BIMserverConnection::processRenameProjectRequest);
+    m_networkManager->post(qNetworkRequest, renameProjectRequestJson);
+    
+  }
+
   void BIMserverConnection::processCreateProjectRequest(QNetworkReply *rep) {
+    if (rep) {
+      QByteArray responseArray = rep->readAll();
+
+      QJsonDocument responseDoc = QJsonDocument::fromJson(responseArray);
+      QJsonObject renameProjectResponse = responseDoc.object();
+      QJsonObject response = renameProjectResponse["response"].toObject();
+
+      if (!containsError(response)) {
+        m_createProjectSuccess = true;
+        m_operationDone = true;
+        emit operationSucceeded(QString("createProject"));
+      } else {
+        emitErrorMessage(response);
+      }
+
+    } else {
+      emit bimserverError();
+    }
+    
+  }
+
+  void BIMserverConnection::processRenameProjectRequest(QNetworkReply *rep) {
     if (rep) {
       QByteArray responseArray = rep->readAll();
 
@@ -415,7 +483,7 @@ namespace bimserver {
       if (!containsError(response)) {
         m_createProjectSuccess = true;
         m_operationDone = true;
-        emit operationSucceeded(QString("createProject"));
+        emit operationSucceeded(QString("renameProject"));
       } else {
         emitErrorMessage(response);
       }
@@ -436,6 +504,7 @@ namespace bimserver {
 
     if (!projectID.isEmpty()) {
       sendDeleteProjectRequest(projectID);
+      emit operationSucceeded(QString("createProject"));
     } else {
       emit errorOccured(QString("Project ID is empty!"));
     }
@@ -813,6 +882,13 @@ namespace bimserver {
     createProject(projectName);
     waitForLock(timeout);
     return m_createProjectSuccess;
+  }
+
+  bool BIMserverConnection::renameProjectBlocked(QString projectName, int timeout) {
+    m_renameProjectSuccess = false;
+    createProject(projectName);
+    waitForLock(timeout);
+    return m_renameProjectSuccess;
   }
 
   bool BIMserverConnection::deleteProjectBlocked(QString projectID, int timeout) {

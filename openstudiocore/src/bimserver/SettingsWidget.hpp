@@ -56,16 +56,17 @@ class SettingsWidget : public QWidget
     signals:
 
     void reset();
-
     void finished();
-
     void updated(QSettings * new_settings);
+    void nextTab(int index);
 
     public slots:
 
     void okButton_clicked();
-    //void successStatus();
-    //void failedStatus();
+    void nextButton_clicked();
+    void logoButton_clicked();
+    void successStatus();
+    void failedStatus();
 
     private:
     
@@ -74,10 +75,13 @@ class SettingsWidget : public QWidget
     QLabel *set_bportLabel;
     QLabel *set_unameLabel;
     QLabel *set_upassLabel;
+    QLabel *set_logoLabel;
 
-    QPushButton *set_okButton;
-    QPushButton *set_cancelButton;
     QSettings   *m_settings;
+    QPushButton *set_okButton;
+    QPushButton *set_nextButton;   
+    QPushButton *set_logoButton;
+    //QPushButton *set_cancelButton;
 
 };
 

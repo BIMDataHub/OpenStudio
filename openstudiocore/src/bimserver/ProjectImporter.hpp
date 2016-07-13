@@ -74,12 +74,16 @@ namespace bimserver {
     void newProject(QString newID);
     void rmvProject(QString newID);
     void newFile(QString newID);
+    void nextTo(int index);
+    void justQuit();
 
     signals:
     /// OSM String is retrieved.
     void finished();
     /// Successful/Failed login at BIMServer
-    void loginStatus(QString);
+    /// void loginStatus(QString);
+    void loginSuccess();
+    void loginFailure();
 
     private:
 
