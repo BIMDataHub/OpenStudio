@@ -35,7 +35,7 @@ namespace openstudio {
 namespace bimserver{
 
   IFCTabController::IFCTabController(bool isIP)
-    : MainTabController(new IFCTabView("IFCTab", true)),
+    : MainTabController(new IFCTabView("IFC Importer", true)),
       m_settingsWidget(nullptr),
       m_projectsWidget(nullptr),
       m_filesWidget(nullptr),
@@ -54,10 +54,9 @@ namespace bimserver{
     addQObject(m_filesWidget);
     this->mainContentWidget()->addSubTab("Files", m_filesWidget, FILES);
 
-    m_importWidget = new ImportWidget();
-    addQObject(m_importWidget);
-    this->mainContentWidget()->addSubTab("Import", m_importWidget, IMPORT); 
-
+    //m_importWidget = new ImportWidget();
+    //addQObject(m_importWidget);
+    //this->mainContentWidget()->addSubTab("Import", m_importWidget, IMPORT); 
   }
 
 /*

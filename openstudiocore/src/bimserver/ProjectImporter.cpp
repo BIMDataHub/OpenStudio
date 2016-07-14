@@ -24,13 +24,13 @@
 
 #include "../osversion/VersionTranslator.hpp"
 
+#include <QLabel>
+#include <QLineEdit>
+#include <QEventLoop>
 #include <QFileDialog>
 #include <QGridLayout>
 #include <QVBoxLayout>
 #include <QMessageBox>
-#include <QLabel>
-#include <QEventLoop>
-#include <QLineEdit>
 #include <QPushButton>
 
 namespace openstudio {
@@ -52,35 +52,39 @@ namespace bimserver {
 
     m_IFCTabController = new IFCTabController(true);
     this->upperLayout()->addWidget(m_IFCTabController->mainContentWidget());
-    
     m_bimserverConnection = nullptr;
     m_waitForOSM = new QEventLoop(this);
 
     m_settingsWidget = m_IFCTabController->m_settingsWidget;
     m_projectsWidget = m_IFCTabController->m_projectsWidget;
     m_filesWidget = m_IFCTabController->m_filesWidget;
-    m_importWidget = m_IFCTabController->m_importWidget;
-
+    
     connect(m_settingsWidget, &SettingsWidget::reset,       m_projectsWidget, &ProjectsWidget::clearList);
     connect(m_settingsWidget, &SettingsWidget::reset,       m_filesWidget, &FilesWidget::clearList);
     connect(m_settingsWidget, &SettingsWidget::updated,     this, &ProjectImporter::processSettings);
+    connect(m_settingsWidget, &SettingsWidget::nextTab,     this, &ProjectImporter::nextTo);
+    
     connect(m_projectsWidget, &ProjectsWidget::newproject,  this, &ProjectImporter::newProject);
     connect(m_projectsWidget, &ProjectsWidget::rmvproject,  this, &ProjectImporter::rmvProject);
-    connect(m_projectsWidget, &ProjectsWidget::updated,     this, &ProjectImporter::resetProID);
+    connect(m_projectsWidget, &ProjectsWidget::updated,     this, &ProjectImporter::resetProID); 
+    connect(m_projectsWidget, &ProjectsWidget::nextTab,     this, &ProjectImporter::nextTo);
+
     connect(m_filesWidget,    &FilesWidget::newfile,        this, &ProjectImporter::newFile);
     connect(m_filesWidget,    &FilesWidget::updated,        this, &ProjectImporter::resetIFCID);
-    connect(this, SIGNAL(loginStatus(QString)),             m_settingsWidget->set_sevStatus, SLOT(setText(QString)));
+    connect(m_filesWidget,    &FilesWidget::nextTab,        this, &ProjectImporter::nextTo);
 
+    connect(this, &ProjectImporter::loginFailure,           m_settingsWidget, &SettingsWidget::failedStatus);
+    connect(this, &ProjectImporter::loginSuccess,           m_settingsWidget, &SettingsWidget::successStatus);
+    
     this->show();
   }
 
-  ProjectImporter::~ProjectImporter() 
+  ProjectImporter::~ProjectImporter()
   {
   }
 
-  boost::optional<model::Model> ProjectImporter::run() 
-  { 
-    
+  boost::optional<model::Model> ProjectImporter::run()
+  {
     //execute event loop
     m_waitForOSM->exec();
 
@@ -108,34 +112,42 @@ namespace bimserver {
     }
   }
 
-  void ProjectImporter::processSucessCases(QString sucessCase) 
+  void ProjectImporter::processSucessCases(QString sucessCase)
   {
     if (sucessCase == "createProject") {
       m_bimserverConnection->getAllProjects();
-
-    } else if (sucessCase == "checkInIFC") {
-      //m_bimserverConnection->getIFCRevisionList(m_proID);
-
-    } else if (sucessCase == "login") {
-      //this->show();
+    } else if (sucessCase == "deleteProject") {
       m_bimserverConnection->getAllProjects();
-      emit loginStatus(tr("<html><b>Sever Status:</b> Connected</html>"));
+      m_bimserverConnection->getIFCRevisionList(m_proID);
+    } else if (sucessCase == "checkInIFC") {
+      sleep(10);
+      m_bimserverConnection->getIFCRevisionList(m_proID);
+      QMessageBox checkBox(this);
+      checkBox.setText(tr("IFC File Uploaded"));
+      checkBox.exec();
+      //this->show();
+    } else if (sucessCase == "login") {
+      m_bimserverConnection->getAllProjects();
+      emit loginSuccess();
     }
   }
 
-  void ProjectImporter::processFailureCases(QString failureCase) 
+  void ProjectImporter::processFailureCases(QString failureCase)
   {
-    QMessageBox messageBox(this);
-    messageBox.setText(tr("BIMserver Failed")); 
-    messageBox.setDetailedText(failureCase);
-    messageBox.exec();
-    this->show();
-  } 
+    QMessageBox failBox(this);
+    failBox.setText(tr("BIMserver Failed"));
+    failBox.setDetailedText(failureCase);
+    failBox.exec();
+    //this->show();
+  }
 
   void ProjectImporter::processBIMserverErrors() {
-    QMessageBox messageBox(this);
-    messageBox.setText(tr("BIMserver Error")); 
-    messageBox.exec();
+    emit loginFailure();
+    QMessageBox loginBox(this);
+    loginBox.setText(tr("Login Failed"));
+    loginBox.setDetailedText(tr("Please double check your credentials"));
+    loginBox.exec();
+    //this->show();
   }
 
   void ProjectImporter::processSettings(QSettings *m_settings)
@@ -149,7 +161,7 @@ namespace bimserver {
     if (m_settings->contains("port")) {
       port = m_settings->value("port").toString();
     }
-  
+
     if (m_settings->contains("usrname")) {
       usrname = m_settings->value("usrname").toString();
     }
@@ -169,31 +181,16 @@ namespace bimserver {
     m_bimserverConnection->login(usrname, psw);
   }
 
-  void ProjectImporter::processOSMRetrieved(QString osmString) 
+  void ProjectImporter::processOSMRetrieved(QString osmString)
   {
     m_OSM = osmString;
     emit finished();
   }
 
-  void ProjectImporter::app_ended() 
+  void ProjectImporter::justQuit()
   {
     emit finished();
   }
-
-  void ProjectImporter::closeEvent(QCloseEvent *event) {
-    emit finished();
-    event->accept();
-  }
-
-  void ProjectImporter::keyPressEvent(QKeyEvent *event) {
-    if (event->key() == Qt::Key_Escape) {
-
-      emit finished();
-      event->accept();
-
-    } else {
-      event->ignore();
-    }
 
   void ProjectImporter::newProject(QString newID)
   {
@@ -220,6 +217,11 @@ namespace bimserver {
   {
     m_ifcID = newID;
     m_bimserverConnection->download(m_ifcID);
+  }
+
+  void ProjectImporter::nextTo(int index)
+  {
+    m_IFCTabController->mainContentWidget()->selectSubTabByIndex(index);
   }
 
 } // bimserver

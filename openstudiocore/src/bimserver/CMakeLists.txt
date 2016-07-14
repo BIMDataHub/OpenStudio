@@ -19,8 +19,8 @@ set(${target_name}_src
   ProjectsWidget.cpp
   FilesWidget.hpp
   FilesWidget.cpp
-  ImportWidget.hpp
-  ImportWidget.cpp
+  #ImportWidget.hpp
+  #ImportWidget.cpp
 
   ../shared_gui_components/OSDialog.cpp
   ../shared_gui_components/OSDialog.hpp
@@ -30,6 +30,8 @@ set(${target_name}_src
   ../openstudio_lib/MainTabController.hpp
   ../shared_gui_components/BusyWidget.cpp
   ../shared_gui_components/BusyWidget.hpp
+  ../shared_gui_components/Buttons.cpp
+  ../shared_gui_components/Buttons.hpp
   ../shared_gui_components/OSQObjectController.cpp
   ../shared_gui_components/OSQObjectController.hpp
 )
@@ -53,11 +55,19 @@ set(${target_name}_moc
   SettingsWidget.hpp
   ProjectsWidget.hpp
   FilesWidget.hpp
+<<<<<<< HEAD
   ImportWidget.hpp
+=======
+  #ImportWidget.hpp
+>>>>>>> 4e81b1a93f603d8873e5e31b87e25006d23dc08d
 
   ../shared_gui_components/OSDialog.hpp
   ../openstudio_lib/MainTabView.hpp
   ../openstudio_lib/MainTabController.hpp
+<<<<<<< HEAD
+=======
+  ../shared_gui_components/Buttons.hpp
+>>>>>>> 4e81b1a93f603d8873e5e31b87e25006d23dc08d
   ../shared_gui_components/BusyWidget.hpp
   ../shared_gui_components/OSQObjectController.hpp
 )

@@ -25,13 +25,15 @@
 #include "../openstudio_lib/MainTabView.hpp"
 #include "../openstudio_lib/MainTabController.hpp"
 
+#include <QMap>
 #include <QDialog>
-#include <QListWidget>
-#include <QStatusBar>
+#include <QLabel>
+#include <QKeyEvent>
 #include <QSettings>
+#include <QStatusBar>
 #include <QEventLoop>
 #include <QCloseEvent>
-#include <QKeyEvent>
+#include <QListWidget>
 
 namespace openstudio {
 namespace bimserver {
@@ -41,9 +43,9 @@ class ProjectsWidget : public QWidget
     Q_OBJECT
     public:
   
-    //ProjectsWidget(const model::Model & model, QWidget * parent = nullptr);
     ProjectsWidget(QWidget * parent = nullptr);
     ~ProjectsWidget() {}
+    bool nameConflict(QString name);
 
     public slots:
 
@@ -52,26 +54,30 @@ class ProjectsWidget : public QWidget
 
     signals:
 
+    void nextTab(int index);
+    void updated(QString new_proID);
     void newproject(QString new_proString);
     void rmvproject(QString new_proString);
-    void updated(QString new_proID);
+    //void rnmproject(QString new_proString);
 
     private:
-    
-    //model::Model m_model;
 
-    QPushButton *newButton;
-    QPushButton *rmvButton;
-    QPushButton *selectButton;
-
+    QMap<QString, QString> *m_proMap;
     QListWidget *m_proList;
+    QPushButton *m_newButton;
+    QPushButton *m_rmvButton;
+    QPushButton *m_nextButton;
+    //QPushButton *renameButton;
     
     private slots:
 
     void newButton_clicked();
     void rmvButton_clicked();
-    void selectButton_clicked();
 
+    void nextButton_clicked();
+    void DoubleClicked(QListWidgetItem *);
+    void SingleClicked(QListWidgetItem *);
+    //void renameButton_clicked();
   };
 
 } // bimserver

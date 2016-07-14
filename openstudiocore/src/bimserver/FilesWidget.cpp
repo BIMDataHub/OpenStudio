@@ -18,72 +18,128 @@
 **********************************************************************/
 #include "FilesWidget.hpp"
 
+#include <QMap>
+#include <QFont>
+#include <QLabel>
 #include <QLineEdit>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QGridLayout>
 #include <QListWidget>
 #include <QPushButton>
 #include <QFileDialog>
 #include <QMessageBox>
+#include "../shared_gui_components/Buttons.hpp"
 
 namespace openstudio {
 namespace bimserver {
 
-//FilesWidget::FilesWidget(const model::Model & model, QWidget * parent)
-  FilesWidget::FilesWidget(QWidget * parent)  
+  FilesWidget::FilesWidget(QWidget * parent)
     : QWidget(parent)
-    //m_model(model)
   {
-  // MainLayout
-    auto fileLayout = new QGridLayout;
+    // MainLayout
+    auto fileLayout = new QVBoxLayout;
+    auto btmFileLayout = new QHBoxLayout;
     setLayout(fileLayout);
 
     m_ifcList = new QListWidget(this);
+    m_ifcMap = new QMap<int, QString>;
 
-    m_newButton = new QPushButton(tr("New IFC File"), this);
+    m_newButton = new QPushButton(tr("Upload File"), this);
     connect(m_newButton, SIGNAL(clicked()),this, SLOT(newButton_clicked()));
-    m_okButton = new QPushButton(tr("Okay"), this);
+    m_okButton = new QPushButton(tr("Import"), this);
     connect(m_okButton, SIGNAL(clicked()), this, SLOT(okButton_clicked()));
 
-    fileLayout->addWidget(m_ifcList,0,0,1,2);
-    fileLayout->addWidget(m_newButton,1,0,1,1); 
-    fileLayout->addWidget(m_okButton,1,1,1,1); 
+    QFont f( "Arial", 15);
+    m_ifcList->setFont(f);
+    m_okButton->setFont(f); 
+    m_newButton->setFont(f);
+    m_okButton->setEnabled(false);
+    m_newButton->setEnabled(false);
+
+    connect(m_ifcList, SIGNAL(itemDoubleClicked(QListWidgetItem *)), this, SLOT(Doubleclicked()));
+    connect(m_ifcList, SIGNAL(itemClicked(QListWidgetItem *)), this, SLOT(Singleclicked()));
+
+    fileLayout->addWidget(m_ifcList,1);
+    btmFileLayout->addSpacing(10);
+    btmFileLayout->addWidget(m_newButton,1,Qt::AlignLeft);
+    btmFileLayout->addSpacing(100);
+    btmFileLayout->addWidget(m_okButton,1,Qt::AlignRight);
+    btmFileLayout->addSpacing(10);
+    fileLayout->addLayout(btmFileLayout,1);
   }
 
-  void FilesWidget::newButton_clicked() 
+  void FilesWidget::newButton_clicked()
   {
     QString new_ifcString = QFileDialog::getOpenFileName(this,
     tr("Open IFC File"), ".",
     tr("IFC files (*.ifc)"));
 
     if (!new_ifcString.isEmpty()) {
+        /*if(nameConflict(new_ifcString)){
+        QMessageBox messageBox(this);
+        messageBox.setText(tr("Name Conflict")); 
+        messageBox.exec();
+      }
+      else{
+        */
       emit newfile(new_ifcString);
+    //}
     } else {
-      QMessageBox messageBox(this);
-      messageBox.setText(tr("New IFC File Failed")); 
-      messageBox.exec();
+      //QMessageBox messageBox(this);
+      //messageBox.setText(tr("New IFC File Failed"));
+      //messageBox.exec();
     }
   }
 
-  void FilesWidget::okButton_clicked() 
+  bool FilesWidget::nameConflict(QString name){
+    for (int i = 0; m_ifcList->count(); ++i) {
+      QListWidgetItem *listItem = m_ifcList->item(i);
+        if (listItem->text().section(":", 1, 0) == name)
+          return true;
+      }
+    return false;
+  }
+
+  void FilesWidget::okButton_clicked()
   {
     if (m_ifcList->currentItem()) {
-      QString m_ifcID = m_ifcList->currentItem()->text().section(":", 0, 0);
+      int m_ifcVer = m_ifcList->currentItem()->text().section(":", 1, 1).toInt();
+      QString m_ifcID = m_ifcMap->value(m_ifcVer);
       emit updated(m_ifcID);
     } else {
       QMessageBox messageBox(this);
-      messageBox.setText(tr("Select IFC File First")); 
+      messageBox.setText(tr("Please select IFC file first!"));
       messageBox.exec();
     }
   }
 
-  void FilesWidget::processIFCList(QStringList iList) 
+  void FilesWidget::processIFCList(QStringList fList)
   {
+    int Version = 1;
     m_ifcList->clear();
-
-    foreach(QString itm, iList) {
-      m_ifcList->addItem(itm);
+    m_ifcMap->clear();
+    foreach(QString ftm, fList) {
+      m_ifcMap->insert(Version, ftm.section(":", 0, 0));
+      m_ifcList->addItem("IFC Version:"+ QString::number(Version));
+      Version ++;
     }
+    m_newButton->setEnabled(true);
+    m_okButton->setEnabled(true);
+  }
 
+  void FilesWidget::DoubleClicked()
+  {
+    //int m_ifcVer = listItem->text().section(":", 1, 1).toInt();
+    //QString m_ifcID = m_ifcMap->value(m_ifcVer);
+    //emit updated(m_ifcID);
+    emit nextTab(1); 
+  }
+
+  void FilesWidget::SingleClicked()
+  {
+    //m_okButton->setEnabled(true);
+    emit nextTab(0);
   }
 
   void FilesWidget::clearList()

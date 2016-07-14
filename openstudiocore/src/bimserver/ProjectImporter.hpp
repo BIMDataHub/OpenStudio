@@ -74,30 +74,33 @@ namespace bimserver {
     void newProject(QString newID);
     void rmvProject(QString newID);
     void newFile(QString newID);
+    void nextTo(int index);
+    void justQuit();
 
     signals:
     /// OSM String is retrieved.
     void finished();
     /// Successful/Failed login at BIMServer
-    void loginStatus(QString);
+
+    /// void loginStatus(QString);
+    void loginSuccess();
+    void loginFailure();
 
     private:
 
-      QString     m_OSM;
-      QString     m_proID;
-      QString     m_ifcID;
-      QListWidget *m_proList;
-      QListWidget *m_ifcList;
-      QEventLoop  *m_waitForOSM;
-      
-      QSettings *m_settings;
-      FilesWidget * m_filesWidget;
-      ImportWidget * m_importWidget;
-      SettingsWidget * m_settingsWidget;
-      ProjectsWidget * m_projectsWidget;
-      IFCTabController *m_IFCTabController;  
-      BIMserverConnection *m_bimserverConnection;
+    QString     m_OSM;
+    QString     m_proID;
+    QString     m_ifcID;
+    QSettings   *m_settings;
+    QEventLoop  *m_waitForOSM;  
 
+    IFCTabController *m_IFCTabController;  
+    BIMserverConnection *m_bimserverConnection;
+    
+    SettingsWidget * m_settingsWidget;
+    ProjectsWidget * m_projectsWidget;
+    FilesWidget * m_filesWidget;
+    ImportWidget * m_importWidget;
   };
 
 } // bimserver
