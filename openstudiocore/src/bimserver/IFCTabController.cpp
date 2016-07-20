@@ -31,11 +31,13 @@
 #include <QFileDialog>
 #include <QString>
 
+#include "../openstudio_lib/MainTabView.hpp"
+
 namespace openstudio {
 namespace bimserver{
 
   IFCTabController::IFCTabController(bool isIP)
-    : MainTabController(new IFCTabView("IFC Importer", true)),
+    : MainTabController(new IFCTabView("IFC Importer", MainTabView::MAIN_TAB)),
       m_settingsWidget(nullptr),
       m_projectsWidget(nullptr),
       m_filesWidget(nullptr),
@@ -44,15 +46,18 @@ namespace bimserver{
   {
     m_settingsWidget = new SettingsWidget();
     addQObject(m_settingsWidget);
-    this->mainContentWidget()->addSubTab("Settings", m_settingsWidget, SETTINGS);
+    //this->mainContentWidget()->addSubTab("Settings", m_settingsWidget, SETTINGS);
+    this->mainContentWidget()->addTabWidget(m_settingsWidget);
 
     m_projectsWidget = new ProjectsWidget();
     addQObject(m_projectsWidget);
-    this->mainContentWidget()->addSubTab("Projects", m_projectsWidget, PROJECTS);
+    //this->mainContentWidget()->addSubTab("Projects", m_projectsWidget, PROJECTS);
+    this->mainContentWidget()->addTabWidget(m_projectsWidget);
 
     m_filesWidget = new FilesWidget();
     addQObject(m_filesWidget);
-    this->mainContentWidget()->addSubTab("Files", m_filesWidget, FILES);
+    //this->mainContentWidget()->addSubTab("Files", m_filesWidget, FILES);
+    this->mainContentWidget()->addTabWidget(m_filesWidget);
 
     //m_importWidget = new ImportWidget();
     //addQObject(m_importWidget);

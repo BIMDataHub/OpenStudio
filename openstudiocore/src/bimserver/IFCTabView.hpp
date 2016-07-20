@@ -20,15 +20,19 @@
 #ifndef BIMSERVER_IFCTABVIEW_HPP
 #define BIMSERVER_IFCTABVIEW_HPP
 
-#include "../openstudio_lib/SubTabView.hpp"
+#include "../openstudio_lib/MainTabView.hpp"
 #include <QWidget>
 #include <vector>
 
-class QStackedWidget;
-class QPushButton;
 class QLabel;
+class QPushButton;
+class QStackedWidget;
+class QVBoxLayout;
 
 namespace openstudio {
+
+class OSViewSwitcher;
+
 namespace bimserver {	
 
 class IFCTabView : public MainTabView
@@ -36,21 +40,35 @@ class IFCTabView : public MainTabView
   Q_OBJECT
 
 public:
-  IFCTabView(const QString & tabLabel, bool hasSubTabs, QWidget * parent = nullptr);
-  bool addSubTab(const QString & subTabLabel, QWidget * widget, int id);
-  void setHasSubTab(bool hasSubTab);
-  virtual ~IFCTabView() {}
+  IFCTabView(const QString & tabLabel, MainTabView::TabType tabType, QWidget * parent = nullptr);
+  //bool addSubTab(const QString & subTabLabel, QWidget * widget, int id);
+  //void setHasSubTab(bool hasSubTab);
+  virtual ~IFCTabView();
+
+  void setTabType(TabType tabTyp);
+  bool addTabWidget(QWidget * widget);
+  bool addSubTab(const QString & subTabLabel, int id);
+  void setSubTab(QWidget * widget);
+  bool selectSubTabByIndex(int index);
+  QPointer<OSViewSwitcher> m_editView;
 
 private slots:
-  void select() ;
+  void select();
 
 signals:
+  //void tabSelected(int id);
   void tabSelected(int id);
+  void toggleUnitsClicked(bool displayIP);
 
 protected:
+  //void setCurrentIndex(int index);
   void setCurrentIndex(int index);
+  void setCurrentWidget(QWidget * widget);
+  void paintEvent( QPaintEvent * event ) override;
+  void resizeEvent( QResizeEvent * event ) override;
 
 private:
+  /*
   QLabel * m_tabLabel;
   QStackedWidget * m_stackedWidget;
   QWidget * m_mainWidget;
@@ -62,6 +80,19 @@ private:
   std::vector<int> m_ids; 
 
   bool m_hasSubTab;
+  */
+  QLabel * m_tabLabel = nullptr;
+  QWidget * m_mainWidget = nullptr;
+  QWidget * m_currentInnerWidget = nullptr;
+  QVBoxLayout * m_innerLayout = nullptr;
+
+  std::vector<QString> m_selectedPixmaps;
+  std::vector<QString> m_neighborSelectedPixmaps;
+  std::vector<QString> m_unSelectedPixmaps;
+  std::vector<QPushButton *> m_tabButtons;
+  std::vector<int> m_ids;
+
+  TabType m_tabType;
 };
 
 } // bimserver

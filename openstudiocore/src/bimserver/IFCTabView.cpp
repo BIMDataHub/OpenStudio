@@ -19,25 +19,29 @@
 
 #include "IFCTabView.hpp"
 
-#include <QStackedWidget>
-#include <QPixmap>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QPushButton>
-#include <QLabel>
-#include <QStyleOption>
-#include <QPainter>
-#include <QResizeEvent>
 #include <vector>
+
+#include <QLabel>
+#include <QPixmap>
+#include <QPainter>
+#include <QBoxLayout>
+#include <QPushButton>
+#include <QResizeEvent>
+#include <QStyleOption>
+#include <QStackedWidget>
+
+#include "../utilities/core/Assert.hpp"
+#include "../shared_gui_components/OSViewSwitcher.hpp"
 
 static const int TAB_SEPARATION = 10;
 
 namespace openstudio {
 namespace bimserver {
 
-IFCTabView::IFCTabView(const QString & tabLabel, bool hasSubTab, QWidget * parent)
-  : MainTabView(tabLabel,hasSubTab,parent)
+IFCTabView::IFCTabView(const QString & tabLabel, MainTabView::TabType tabType, QWidget * parent)
+  : MainTabView(tabLabel,tabType,parent)
 {
+  /*
   this->setObjectName("BlueGradientWidget");
 
   m_tabLabel = new QLabel(tabLabel,this);
@@ -59,10 +63,208 @@ IFCTabView::IFCTabView(const QString & tabLabel, bool hasSubTab, QWidget * paren
   m_stackedWidget->setContentsMargins(0,0,0,0);
   innerLayout->addWidget(m_stackedWidget);
 
-  setHasSubTab(hasSubTab);
+  setHasSubTab(hasSubTab); 
+  */
 
+  this->setObjectName("BlueGradientWidget");
+
+  m_tabLabel = new QLabel(tabLabel,this);
+  m_tabLabel->setFixedHeight(20);
+  m_tabLabel->setStyleSheet("QLabel { color: white; }");
+  m_tabLabel->adjustSize();
+  m_tabLabel->setFixedWidth(m_tabLabel->width());
+  m_tabLabel->move(7,5);
+
+  auto label = new QLabel();
+  label->setObjectName("H2");
+
+  m_editView->setView(label);
+
+  m_innerLayout = new QVBoxLayout();
+  m_innerLayout->setSpacing(0);
+  m_innerLayout->addWidget(m_editView);
+
+  m_mainWidget = new QWidget(this);
+  m_mainWidget->setObjectName("IFCTabView");
+  m_mainWidget->move(7,25);
+  m_mainWidget->setLayout(m_innerLayout);
+
+  setTabType(tabType);
 }
 
+IFCTabView::~IFCTabView()
+{
+  if (m_editView) { delete m_editView; }
+}
+
+void IFCTabView::setTabType(MainTabView::TabType tabType)
+{
+  QString style;
+
+  switch (tabType)
+  {
+  case MAIN_TAB:
+    style.append("QWidget#IFCTabView { ");
+    style.append("  background: #E6E6E6; ");
+    style.append("  border-left: 1px solid black; ");
+    style.append("  border-top: 1px solid black; ");
+    style.append("}");
+    m_mainWidget->layout()->setContentsMargins(0, 0, 0, 0);
+    break;
+  case SUB_TAB:
+    style.append("QWidget#IFCTabView { ");
+    style.append("  background: #E6E6E6; ");
+    style.append("  border-left: 1px solid black; ");
+    style.append("  border-top: 1px solid black; ");
+    style.append("  border-top-left-radius: 5px; ");
+    style.append("}");
+    m_mainWidget->layout()->setContentsMargins(7, 10, 0, 0);
+    break;
+  case GRIDVIEW_SUB_TAB:
+    style.append("QWidget#IFCTabView { ");
+    style.append("  background: #E6E6E6; ");
+    style.append("  border-left: 1px solid black; ");
+    style.append("  border-top: 1px solid black; ");
+    style.append("  border-top-left-radius: 5px; ");
+    style.append("}");
+    m_mainWidget->layout()->setContentsMargins(1, 2, 0, 0);
+    break;
+  default:
+    OS_ASSERT(false);
+  }
+
+  m_mainWidget->setStyleSheet(style);
+}
+
+bool IFCTabView::addTabWidget(QWidget * widget)
+{
+  // This method should only be called in cases where the tab will not have sub tabs
+  OS_ASSERT(m_tabType == MAIN_TAB);
+  if (m_tabType != MAIN_TAB) return false;
+
+  m_editView->setView(widget);
+
+  return true;
+}
+
+bool IFCTabView::addSubTab(const QString & subTablabel, int id)
+{
+  // This method should only be called in cases where the tab will have sub tabs
+  OS_ASSERT(m_tabType != MAIN_TAB);
+  if (m_tabType == MAIN_TAB) return false;
+
+  auto button = new QPushButton(this);
+  button->setText(subTablabel);
+  button->setFixedHeight(21);
+  m_tabButtons.push_back(button);
+  connect(button, &QPushButton::clicked, this, &IFCTabView::select);
+
+  m_ids.push_back(id);
+
+  setCurrentIndex(0);
+  return true;
+}
+
+void IFCTabView::setSubTab(QWidget * widget)
+{
+  m_editView->setView(widget);
+}
+
+void IFCTabView::select()
+{
+  QPushButton * button = qobject_cast<QPushButton *>(sender());
+
+  int index = 0;
+
+  for( auto it = m_tabButtons.begin();
+       it < m_tabButtons.end();
+       ++it ){
+    if( *it == button ){
+      break;
+    } else {
+      index++;
+    }
+  } 
+
+  setCurrentIndex(index);
+}
+
+void IFCTabView::setCurrentIndex(int index)
+{
+  int xPos = m_tabLabel->width() + TAB_SEPARATION;
+
+  for(unsigned i = 0; i < m_tabButtons.size(); i++)
+  {
+    QPushButton * button = m_tabButtons[i];
+    QString style;
+
+    style.append("QPushButton { border: none; background-color: #BBCDE3; ");
+    style.append("              border-right: 1px solid black;");
+    style.append("              border-bottom: 1px solid black;");
+    style.append("              border-top: 1px solid black;");
+    style.append("              border-left: 1px solid black;");
+    style.append("              border-top-left-radius: 5px;");
+    style.append("              border-top-right-radius: 5px;");
+    style.append("              padding-left: 10px;");
+    style.append("              padding-right: 10px;");
+    style.append("              color: black;");
+    style.append("}");
+
+    button->setStyleSheet(style); 
+    button->adjustSize();
+    button->move(xPos,5);
+
+    button->stackUnder(m_mainWidget);
+
+    xPos += TAB_SEPARATION + button->width();
+  }
+
+  QPushButton * button = m_tabButtons[index];
+
+  QString style;
+
+  style.append("QPushButton { border: none; background-color: #E6E6E6; ");
+  style.append("              border-right: 1px solid black;");
+  style.append("              border-bottom: none;");
+  style.append("              border-top: 1px solid black;");
+  style.append("              border-left: 1px solid black;");
+  style.append("              border-top-left-radius: 5px;");
+  style.append("              border-top-right-radius: 5px;");
+  style.append("              padding-left: 10px;");
+  style.append("              padding-right: 10px;");
+  style.append("              color: black;");
+  style.append("}");
+
+  button->setStyleSheet(style); 
+  button->raise();
+
+  emit tabSelected(m_ids[index]);
+}
+
+void IFCTabView::setCurrentWidget(QWidget * widget)
+{
+  OS_ASSERT(false);
+}
+
+void IFCTabView::paintEvent ( QPaintEvent * event )
+{
+  QStyleOption opt;
+  opt.init(this);
+  QPainter p(this);
+  style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+}
+
+void IFCTabView::resizeEvent( QResizeEvent * event )
+{
+  QSize size = event->size();  
+
+  QSize newSize(size.width() - 7,size.height() - 25);
+
+  m_mainWidget->resize(newSize);
+}
+
+
+/*
 void IFCTabView::setHasSubTab(bool hasSubTab)
 {
   m_hasSubTab = hasSubTab;
@@ -90,7 +292,6 @@ void IFCTabView::setHasSubTab(bool hasSubTab)
     m_mainWidget->layout()->setContentsMargins(0,0,0,0);
   }
 }
-
 
 bool IFCTabView::addSubTab(const QString & subTablabel, QWidget * widget, int id)
 {
@@ -195,6 +396,7 @@ void IFCTabView::setCurrentIndex(int index)
 
   emit tabSelected(m_ids[index]);
 }
+*/
 
 } // bimserver
 } // openstudio

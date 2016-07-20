@@ -45,7 +45,7 @@ namespace bimserver {
   
     FilesWidget(QWidget * parent = nullptr);
     ~FilesWidget() {}
-    //bool nameConflict(QString name);
+    bool nameConflict(QString name);
 
     public slots:
 
