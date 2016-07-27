@@ -44,7 +44,7 @@ namespace bimserver{
   {
     m_settingsWidget = new SettingsWidget();
     addQObject(m_settingsWidget);
-    this->mainContentWidget()->addSubTab("Settings", m_settingsWidget, SETTINGS);
+    this->mainContentWidget()->addSubTab("Connections", m_settingsWidget, SETTINGS);
 
     m_projectsWidget = new ProjectsWidget();
     addQObject(m_projectsWidget);

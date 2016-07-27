@@ -50,7 +50,7 @@ namespace bimserver {
 
     newButton = new QPushButton(tr("Create Project"), this);    
     connect(newButton, SIGNAL(clicked()),this, SLOT(newButton_clicked()));
-    rmvButton = new QPushButton(tr("Remove"), this); 
+    rmvButton = new QPushButton(tr("Remove Project"), this); 
     connect(rmvButton, SIGNAL(clicked()),this, SLOT(rmvButton_clicked()));
     nextButton = new QPushButton(tr("Next Tab"), this); 
     connect(nextButton, SIGNAL(clicked()), this, SLOT(nextButton_clicked()));
@@ -116,7 +116,7 @@ namespace bimserver {
         QString m_proName = m_proList->currentItem()->text();
         QString m_proID = m_proMap->value(m_proName);
         emit rmvproject(m_proID);
-        
+
       } else {
         QMessageBox messageBox(this);
         messageBox.setText(tr("Please select project first!")); 
