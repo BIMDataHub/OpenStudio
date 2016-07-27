@@ -18,6 +18,8 @@
 **********************************************************************/
 #include "ProjectsWidget.hpp"
 
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QGridLayout>
 #include <QDialog>
 #include <QPushButton>
@@ -25,32 +27,55 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QFont>
+#include <QMap>
+
+#include "../shared_gui_components/Buttons.hpp"
 
 namespace openstudio {
 namespace bimserver {
 
-  //ProjectsWidget::ProjectsWidget(const model::Model & model, QWidget * parent)
   ProjectsWidget::ProjectsWidget(QWidget * parent)
     : QWidget(parent)
-      //m_model(model)
   {
     // MainLayout
-    auto projectLayout = new QGridLayout;
+    auto projectLayout = new QVBoxLayout;
+    auto btmProjLayout = new QHBoxLayout;
     setLayout(projectLayout);
 
+    QFont f( "Arial", 15);
+
     m_proList = new QListWidget(this);
+    m_proMap = new QMap<QString, QString>;
 
-    QPushButton *newButton = new QPushButton(tr("New Project"), this);
+    newButton = new QPushButton(tr("Create Project"), this);    
     connect(newButton, SIGNAL(clicked()),this, SLOT(newButton_clicked()));
-    QPushButton *rmvButton = new QPushButton(tr("Delete Project"), this);
+    rmvButton = new QPushButton(tr("Remove"), this); 
     connect(rmvButton, SIGNAL(clicked()),this, SLOT(rmvButton_clicked()));
-    QPushButton *selectButton = new QPushButton(tr("Select"), this);
-    connect(selectButton, SIGNAL(clicked()), this, SLOT(selectButton_clicked()));
+    nextButton = new QPushButton(tr("Next Tab"), this); 
+    connect(nextButton, SIGNAL(clicked()), this, SLOT(nextButton_clicked()));
 
-    projectLayout->addWidget(m_proList,0,0,1,3);
-    projectLayout->addWidget(newButton,1,0,1,1);
-    projectLayout->addWidget(rmvButton,1,1,1,1); 
-    projectLayout->addWidget(selectButton,1,2,1,1);  
+    m_proList->setFont(f);
+    newButton->setFont(f);
+    rmvButton->setFont(f);
+    nextButton->setFont(f);
+
+    newButton->setEnabled(false);
+    rmvButton->setEnabled(false);
+    nextButton->setEnabled(false);
+
+    connect(m_proList, SIGNAL(itemDoubleClicked(QListWidgetItem *)), this, SLOT(DoubleClicked(QListWidgetItem *)));
+    connect(m_proList, SIGNAL(itemClicked(QListWidgetItem *)), this, SLOT(SingleClicked(QListWidgetItem *)));
+
+    projectLayout->addWidget(m_proList,1);
+    btmProjLayout->addSpacing(10);
+    btmProjLayout->addWidget(newButton,1,Qt::AlignLeft);
+    btmProjLayout->addSpacing(10);
+    btmProjLayout->addWidget(rmvButton,1,Qt::AlignCenter);
+    btmProjLayout->addSpacing(300);
+    btmProjLayout->addWidget(nextButton,1,Qt::AlignRight);
+    btmProjLayout->addSpacing(10);  
+    projectLayout->addLayout(btmProjLayout,1);
   }
 
   void ProjectsWidget::newButton_clicked() 
@@ -80,7 +105,7 @@ namespace bimserver {
       emit newproject(new_proString);
     } else {
       QMessageBox messageBox(this);
-      messageBox.setText(tr("New Project Not Created")); 
+      messageBox.setText(tr("Illegal Input, New Project Not Created")); 
       messageBox.exec();
     }
   }
@@ -88,27 +113,45 @@ namespace bimserver {
   void ProjectsWidget::rmvButton_clicked() 
   {
     if (m_proList->currentItem()) {
-      QString m_proID = m_proList->currentItem()->text().section(":", 0, 0);
-      emit rmvproject(m_proID);
+        QString m_proName = m_proList->currentItem()->text();
+        QString m_proID = m_proMap->value(m_proName);
+        emit rmvproject(m_proID);
+        
       } else {
-      QMessageBox messageBox(this);
-      messageBox.setText(tr("Select Project First")); 
-      messageBox.exec();
-    }
+        QMessageBox messageBox(this);
+        messageBox.setText(tr("Please select project first!")); 
+        messageBox.exec();
+      }
   }
 
-  void ProjectsWidget::selectButton_clicked() 
+  void ProjectsWidget::nextButton_clicked()
   {
     if (m_proList->currentItem()) {
-      QString m_proID = m_proList->currentItem()->text().section(":", 0, 0);
+      QString m_proName = m_proList->currentItem()->text();
+      QString m_proID = m_proMap->value(m_proName);
       emit updated(m_proID);
       } else {
       QMessageBox messageBox(this);
-      messageBox.setText(tr("Select Project First")); 
+      messageBox.setText(tr("Please select project first!")); 
       messageBox.exec();
     }
+    emit nextTab(2);
+  } 
+
+  void ProjectsWidget::DoubleClicked(QListWidgetItem * listItem)
+  {
+    QString m_proName = m_proList->currentItem()->text();
+    QString m_proID = m_proMap->value(m_proName);
+    emit updated(m_proID); 
+    emit nextTab(2);
   }
 
+  void ProjectsWidget::SingleClicked(QListWidgetItem * listItem)
+  {
+    rmvButton->setEnabled(true);
+    nextButton->setEnabled(true);
+  }
+  
   void ProjectsWidget::clearList()
   {
     m_proList->clear();
@@ -117,9 +160,14 @@ namespace bimserver {
   void ProjectsWidget::processProjectList(QStringList pList) 
   {
     m_proList->clear();
+    m_proMap->clear();
     foreach(QString itm, pList) {
-      m_proList->addItem(itm);
+      m_proMap->insert(itm.section(":", 1, 1), itm.section(":", 0, 0));
+      m_proList->addItem(itm.section(":", 1, 1));
     }
+    newButton->setEnabled(true);
+    rmvButton->setEnabled(false);
+    nextButton->setEnabled(false);
   }
 
 } // bimserver

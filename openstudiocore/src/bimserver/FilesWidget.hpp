@@ -26,12 +26,14 @@
 #include "../openstudio_lib/MainTabController.hpp"
 
 #include <QDialog>
+#include <QLabel>
 #include <QListWidget>
 #include <QStatusBar>
 #include <QSettings>
 #include <QEventLoop>
 #include <QCloseEvent>
 #include <QKeyEvent>
+#include <QMap>
 
 namespace openstudio {
 namespace bimserver {
@@ -41,7 +43,6 @@ namespace bimserver {
     Q_OBJECT
     public:
   
-    //FilesWidget(const model::Model & model, QWidget * parent = nullptr);
     FilesWidget(QWidget * parent = nullptr);
     ~FilesWidget() {}
 
@@ -51,22 +52,23 @@ namespace bimserver {
     void processIFCList(QStringList IFCList);
 
     signals:
+    
     void newfile(QString new_ifcString);
     void updated(QString new_ifcID);
 
     private:
-    
-    //model::Model m_model;
 
     QPushButton *m_newButton;
     QPushButton *m_okButton;
-
-    // QListWidget *m_proList;
     QListWidget *m_ifcList;
+    QMap<int, QString> *m_ifcMap;
 
     private slots:
+    
     void newButton_clicked();
     void okButton_clicked();
+    void DoubleClicked(QListWidgetItem *);
+    void SingleClicked(QListWidgetItem *);
     
   };
 
