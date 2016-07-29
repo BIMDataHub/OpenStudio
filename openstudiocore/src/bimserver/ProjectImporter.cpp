@@ -59,22 +59,20 @@ namespace bimserver {
     m_settingsWidget = m_IFCTabController->m_settingsWidget;
     m_projectsWidget = m_IFCTabController->m_projectsWidget;
     m_filesWidget = m_IFCTabController->m_filesWidget;
-    //m_importWidget = m_IFCTabController->m_importWidget;
 
     connect(m_settingsWidget, &SettingsWidget::reset,       m_projectsWidget, &ProjectsWidget::clearList);
     connect(m_settingsWidget, &SettingsWidget::reset,       m_filesWidget, &FilesWidget::clearList);
     connect(m_settingsWidget, &SettingsWidget::updated,     this, &ProjectImporter::processSettings);
     connect(m_projectsWidget, &ProjectsWidget::newproject,  this, &ProjectImporter::newProject);
-    //connect(m_projectsWidget, &ProjectsWidget::rnmproject,  this, &ProjectImporter::rnmProject);
     connect(m_projectsWidget, &ProjectsWidget::rmvproject,  this, &ProjectImporter::rmvProject);
+    connect(m_projectsWidget, &ProjectsWidget::rmvproject,  m_filesWidget, &FilesWidget::clearList);
     connect(m_projectsWidget, &ProjectsWidget::updated,     this, &ProjectImporter::resetProID);
-    connect(m_settingsWidget, &SettingsWidget::nextTab,        this, &ProjectImporter::nextTo);
-    connect(m_projectsWidget, &ProjectsWidget::nextTab,        this, &ProjectImporter::nextTo);
+    connect(m_settingsWidget, &SettingsWidget::nextTab,     this, &ProjectImporter::nextTo);
+    connect(m_projectsWidget, &ProjectsWidget::nextTab,     this, &ProjectImporter::nextTo);
     connect(m_filesWidget,    &FilesWidget::newfile,        this, &ProjectImporter::newFile);
     connect(m_filesWidget,    &FilesWidget::updated,        this, &ProjectImporter::resetIFCID);
-    //connect(this, SIGNAL(loginStatus(QString)),             m_settingsWidget->set_sevStatus, SLOT(setText(QString)));
-    connect(this, &ProjectImporter::loginSuccess,  m_settingsWidget, &SettingsWidget::successStatus);
-    connect(this, &ProjectImporter::loginFailure,  m_settingsWidget, &SettingsWidget::failedStatus);
+    connect(this, &ProjectImporter::loginSuccess,           m_settingsWidget, &SettingsWidget::successStatus);
+    connect(this, &ProjectImporter::loginFailure,           m_settingsWidget, &SettingsWidget::failedStatus);
     this->show();
   }
 
