@@ -128,6 +128,8 @@ namespace bimserver {
   void FilesWidget::clearList()
   {
     m_ifcList->clear();
+    m_newButton->setEnabled(false);
+    m_okButton->setEnabled(false);
   }
 
 } // bimserver

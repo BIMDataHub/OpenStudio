@@ -148,6 +148,7 @@ namespace bimserver {
 
   void ProjectsWidget::SingleClicked(QListWidgetItem * listItem)
   {
+    newButton->setEnabled(true);
     rmvButton->setEnabled(true);
     nextButton->setEnabled(true);
   }
@@ -155,6 +156,9 @@ namespace bimserver {
   void ProjectsWidget::clearList()
   {
     m_proList->clear();
+    newButton->setEnabled(true);
+    rmvButton->setEnabled(false);
+    nextButton->setEnabled(false);
   }
 
   void ProjectsWidget::processProjectList(QStringList pList) 

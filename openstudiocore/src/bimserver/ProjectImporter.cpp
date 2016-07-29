@@ -73,6 +73,8 @@ namespace bimserver {
     connect(m_filesWidget,    &FilesWidget::updated,        this, &ProjectImporter::resetIFCID);
     connect(this, &ProjectImporter::loginSuccess,           m_settingsWidget, &SettingsWidget::successStatus);
     connect(this, &ProjectImporter::loginFailure,           m_settingsWidget, &SettingsWidget::failedStatus);
+    connect(this, &ProjectImporter::loginFailure,           m_projectsWidget, &ProjectsWidget::clearList);
+    connect(this, &ProjectImporter::loginFailure,           m_filesWidget, &FilesWidget::clearList);
     this->show();
   }
 
