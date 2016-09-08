@@ -259,6 +259,16 @@ Workspace ForwardTranslator::translateModelPrivate( model::Model & model, bool f
       }
     }
   }
+  
+  // remove orphan Generator:MicroTurbine
+  for (auto& chp : model.getConcreteModelObjects<GeneratorMicroTurbine>()){
+    if (!chp.electricLoadCenterDistribution()){
+      LOG(Warn, "GeneratorMicroTurbine " << chp.name().get() << " is not referenced by any ElectricLoadCenterDistribution, it will not be translated.");
+      chp.remove();
+      continue;
+    }
+  }
+  
 
   // remove orphan photovoltaics
   for (auto& pv : model.getConcreteModelObjects<GeneratorPhotovoltaic>()){
@@ -335,9 +345,11 @@ Workspace ForwardTranslator::translateModelPrivate( model::Model & model, bool f
     translateAndMapModelObject(*simulationControl);
 
     // Add a ProgramControl object to force a single threaded simulation
-    IdfObject programControl(openstudio::IddObjectType::ProgramControl);
-    programControl.setInt(openstudio::ProgramControlFields::NumberofThreadsAllowed,1);
-    m_idfObjects.push_back(programControl);
+    //AP This code is no longer needed as multithreading has been disabled
+    //in E+ and this object is no longer forward translated anyway.
+    //IdfObject programControl(openstudio::IddObjectType::ProgramControl);
+    //programControl.setInt(openstudio::ProgramControlFields::NumberofThreadsAllowed,1);
+    //m_idfObjects.push_back(programControl);
 
     // ensure that sizing parameters control exists
     boost::optional<model::SizingParameters> sizingParameters = model.getOptionalUniqueModelObject<model::SizingParameters>();
@@ -367,8 +379,8 @@ Workspace ForwardTranslator::translateModelPrivate( model::Model & model, bool f
     std::vector<UtilityBill> utilityBills = model.getConcreteModelObjects<UtilityBill>();
     for (UtilityBill utilityBill : utilityBills){
       // these meters and variables will be translated later
-      Meter consumptionMeter = utilityBill.consumptionMeter();
-      boost::optional<Meter> peakDemandMeter = utilityBill.peakDemandMeter();
+      OutputMeter consumptionMeter = utilityBill.consumptionMeter();
+      boost::optional<OutputMeter> peakDemandMeter = utilityBill.peakDemandMeter();
     }
   }
 
@@ -1305,6 +1317,12 @@ boost::optional<IdfObject> ForwardTranslator::translateAndMapModelObject(ModelOb
     retVal = translateElectricLoadCenterInverterSimple(temp);
     break;
   }
+  case openstudio::IddObjectType::OS_ElectricLoadCenter_Storage_Simple:
+  {
+    model::ElectricLoadCenterStorageSimple temp = modelObject.cast<ElectricLoadCenterStorageSimple>();
+    retVal = translateElectricLoadCenterStorageSimple(temp);
+    break;
+  }
   case openstudio::IddObjectType::OS_EvaporativeCooler_Direct_ResearchSpecial :
     {
       model::EvaporativeCoolerDirectResearchSpecial evap = modelObject.cast<EvaporativeCoolerDirectResearchSpecial>();
@@ -1380,6 +1398,13 @@ boost::optional<IdfObject> ForwardTranslator::translateAndMapModelObject(ModelOb
   {
     model::FluidCoolerTwoSpeed fluidCoolerTwoSpeed = modelObject.cast<FluidCoolerTwoSpeed>();
     retVal = translateFluidCoolerTwoSpeed(fluidCoolerTwoSpeed);
+    break;
+  }
+  case openstudio::IddObjectType::OS_Generator_MicroTurbine:
+  {
+    // Will also translate the Generator:MicroTurbine:HeatRecovery if there is one
+    model::GeneratorMicroTurbine temp = modelObject.cast<GeneratorMicroTurbine>();
+    retVal = translateGeneratorMicroTurbine(temp);
     break;
   }
   case openstudio::IddObjectType::OS_Generator_Photovoltaic:
@@ -1636,16 +1661,28 @@ boost::optional<IdfObject> ForwardTranslator::translateAndMapModelObject(ModelOb
       retVal = translateMasslessOpaqueMaterial(material);
       break;
     }
+  case openstudio::IddObjectType::OS_MaterialProperty_GlazingSpectralData :
+    {
+      model::MaterialPropertyGlazingSpectralData spectralData = modelObject.cast<MaterialPropertyGlazingSpectralData>();
+      retVal = translateMaterialPropertyGlazingSpectralData(spectralData);
+      break;
+    }
   case openstudio::IddObjectType::OS_Material_RoofVegetation :
     {
       model::RoofVegetation material = modelObject.cast<RoofVegetation>();
       retVal = translateRoofVegetation(material);
       break;
     }
-  case openstudio::IddObjectType::OS_Meter :
+  case openstudio::IddObjectType::OS_Meter_Custom :
     {
-      model::Meter meter = modelObject.cast<Meter>();
-      retVal = translateMeter(meter);
+      model::MeterCustom meterCustom = modelObject.cast<MeterCustom>();
+      retVal = translateMeterCustom(meterCustom);
+      break;
+    }
+  case openstudio::IddObjectType::OS_Meter_CustomDecrement :
+    {
+      model::MeterCustomDecrement meterCustomDecrement = modelObject.cast<MeterCustomDecrement>();
+      retVal = translateMeterCustomDecrement(meterCustomDecrement);
       break;
     }
   case openstudio::IddObjectType::OS_ModelObjectList :
@@ -1764,6 +1801,12 @@ boost::optional<IdfObject> ForwardTranslator::translateAndMapModelObject(ModelOb
     {
       model::OutputControlReportingTolerances outputControl = modelObject.cast<OutputControlReportingTolerances>();
       retVal = translateOutputControlReportingTolerances(outputControl);
+      break;
+    }
+  case openstudio::IddObjectType::OS_Output_Meter :
+    {
+      model::OutputMeter meter = modelObject.cast<OutputMeter>();
+      retVal = translateOutputMeter(meter);
       break;
     }
   case openstudio::IddObjectType::OS_Output_Variable :
@@ -2871,16 +2914,20 @@ std::vector<IddObjectType> ForwardTranslator::iddObjectsToTranslateInitializer()
   result.push_back(IddObjectType::OS_Refrigeration_TranscriticalSystem);
 
   result.push_back(IddObjectType::OS_ElectricLoadCenter_Distribution);
+  result.push_back(IddObjectType::OS_Generator_MicroTurbine);
   result.push_back(IddObjectType::OS_Generator_Photovoltaic);
   result.push_back(IddObjectType::OS_PhotovoltaicPerformance_EquivalentOneDiode);
   result.push_back(IddObjectType::OS_PhotovoltaicPerformance_Simple);
   result.push_back(IddObjectType::OS_ElectricLoadCenter_Inverter_LookUpTable);
   result.push_back(IddObjectType::OS_ElectricLoadCenter_Inverter_Simple);
+  result.push_back(IddObjectType::OS_ElectricLoadCenter_Storage_Simple);
 
   // put these down here so they have a chance to be translated with their "parent"
   result.push_back(IddObjectType::OS_LifeCycleCost);
 
-  result.push_back(IddObjectType::OS_Meter);
+  result.push_back(IddObjectType::OS_Output_Meter);
+  result.push_back(IddObjectType::OS_Meter_Custom);
+  result.push_back(IddObjectType::OS_Meter_CustomDecrement);
   result.push_back(IddObjectType::OS_Output_Variable);
 
   return result;
@@ -2889,6 +2936,7 @@ std::vector<IddObjectType> ForwardTranslator::iddObjectsToTranslateInitializer()
 void ForwardTranslator::translateConstructions(const model::Model & model)
 {
   std::vector<IddObjectType> iddObjectTypes;
+  iddObjectTypes.push_back(IddObjectType::OS_MaterialProperty_GlazingSpectralData);
   iddObjectTypes.push_back(IddObjectType::OS_Material);
   iddObjectTypes.push_back(IddObjectType::OS_Material_AirGap);
   iddObjectTypes.push_back(IddObjectType::OS_Material_AirWall);
