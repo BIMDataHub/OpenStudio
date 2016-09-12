@@ -9,6 +9,33 @@ set(${target_name}_src
   BIMserverConnection.cpp
   ProjectImporter.hpp
   ProjectImporter.cpp
+  IFCTabView.cpp
+  IFCTabView.hpp
+  IFCTabController.cpp
+  IFCTabController.hpp
+  SettingsWidget.hpp
+  SettingsWidget.cpp
+  ProjectsWidget.hpp
+  ProjectsWidget.cpp
+  FilesWidget.hpp
+  FilesWidget.cpp
+  #ImportWidget.hpp
+  #ImportWidget.cpp
+
+  ../shared_gui_components/OSDialog.cpp
+  ../shared_gui_components/OSDialog.hpp
+  ../openstudio_lib/MainTabView.cpp
+  ../openstudio_lib/MainTabView.hpp
+  ../openstudio_lib/MainTabController.cpp
+  ../openstudio_lib/MainTabController.hpp
+  ../shared_gui_components/BusyWidget.cpp
+  ../shared_gui_components/BusyWidget.hpp
+  ../shared_gui_components/Buttons.cpp
+  ../shared_gui_components/Buttons.hpp
+  ../shared_gui_components/OSQObjectController.cpp
+  ../shared_gui_components/OSQObjectController.hpp
+  ../shared_gui_components/OSViewSwitcher.cpp
+  ../shared_gui_components/OSViewSwitcher.hpp
 )
 
 set(${target_name}_test_src
@@ -20,6 +47,25 @@ set(${target_name}_swig_src
   BIMserver.i
 )
 
+set(${target_name}_moc
+  BIMserverAPI.hpp
+  mainpage.hpp
+  BIMserverConnection.hpp
+  IFCTabView.hpp
+  IFCTabController.hpp
+  ProjectImporter.hpp
+  SettingsWidget.hpp
+  ProjectsWidget.hpp
+  FilesWidget.hpp
+  #ImportWidget.hpp
+
+  ../shared_gui_components/OSDialog.hpp
+  ../openstudio_lib/MainTabView.hpp
+  ../openstudio_lib/MainTabController.hpp
+  ../shared_gui_components/Buttons.hpp
+  ../shared_gui_components/BusyWidget.hpp
+  ../shared_gui_components/OSQObjectController.hpp
+)
 set(${target_name}_depends
   ${Boost_LIBRARIES}
   ${CMAKE_THREAD_LIBS}

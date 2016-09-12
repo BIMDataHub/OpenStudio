@@ -1,5 +1,5 @@
 /**********************************************************************
-*  Copyright (c) 2008-2016, Alliance for Sustainable Energy.
+*  Copyright (c) 2008-2015, Alliance for Sustainable Energy.
 *  All rights reserved.
 *
 *  This library is free software; you can redistribute it and/or
@@ -66,6 +66,8 @@ namespace bimserver {
     void getAllProjects();
     /// create new project
     void createProject(QString projectName);
+    /// rename a project
+    void renameProject(QString projectName);
     /// delete a project
     void deleteProject(QString projectID);
     /// check in new ifc file
@@ -85,6 +87,8 @@ namespace bimserver {
     boost::optional<QStringList> getAllProjectsBlocked(int timeout);
     /// create new project, Blocked
     bool createProjectBlocked(QString projectName, int timeout);
+    /// rename new project, Blocked
+    bool renameProjectBlocked(QString projectName, int timeout);
     /// delete a project, Blocked
     bool deleteProjectBlocked(QString projectID, int timeout);
     /// check in new ifc file, Blocked
@@ -127,6 +131,8 @@ namespace bimserver {
     void processGetDownloadDataRequest(QNetworkReply *rep);
     /// create new project
     void processCreateProjectRequest(QNetworkReply *rep);
+    /// rename a project
+    void processRenameProjectRequest(QNetworkReply *rep);
     /// Delete a project
     void processDeleteProjectRequest(QNetworkReply *rep);
     /// get ifc deserializer
@@ -148,6 +154,7 @@ namespace bimserver {
     void sendDownloadRequest();
     void sendGetDownloadDataRequest();
     void sendCreateProjectRequest(QString projectName);
+    void sendRenameProjectRequest(QString projectName);
     void sendDeleteProjectRequest(QString projectID);
     void sendGetDeserializerRequest();
     void sendCheckInIFCRequest(QString IFCFilePath);
@@ -178,6 +185,7 @@ namespace bimserver {
     boost::optional<QString> m_osmModel;
     boost::optional<QStringList> m_projectList;
     bool m_createProjectSuccess;
+    bool m_renameProjectSuccess;
     bool m_deleteProjectSuccess;
     bool m_checkInIFCSuccess;
     boost::optional<QStringList> m_ifcList;
